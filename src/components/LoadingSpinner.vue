@@ -20,28 +20,13 @@
         <div class="brand-section">
           <div class="logo-container">
             <div class="logo-inner">
-              <svg viewBox="0 0 100 100" class="logo-svg">
-                <defs>
-                  <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#667eea"/>
-                    <stop offset="50%" stop-color="#764ba2"/>
-                    <stop offset="100%" stop-color="#f093fb"/>
-                  </linearGradient>
-                </defs>
-                <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" stroke-width="4" opacity="0.8"/>
-                <circle cx="50" cy="50" r="25" fill="url(#logoGradient)" opacity="0.6"/>
-                <rect x="42" y="35" width="16" height="30" fill="white" rx="2"/>
-                <circle cx="50" cy="40" r="3" fill="#667eea"/>
-                <rect x="44" y="48" width="12" height="2" fill="#667eea" rx="1"/>
-                <rect x="44" y="52" width="8" height="2" fill="#667eea" rx="1"/>
-                <rect x="44" y="56" width="10" height="2" fill="#667eea" rx="1"/>
-              </svg>
+              <img src="@/assets/images/bheemlogo.png" alt="Platform Logo" class="bheem-logo">
             </div>
             <div class="logo-ring"></div>
             <div class="logo-ring-outer"></div>
           </div>
-          <h2 class="brand-name">Agent Bheem</h2>
-          <p class="brand-tagline">AI-Powered Intelligence Platform</p>
+          <h2 class="brand-name">Intelligent Platform</h2>
+          <p class="brand-tagline">AI-Powered Enterprise Solution</p>
         </div>
 
         <!-- Success Animation -->
@@ -112,7 +97,7 @@
               <span>Ready</span>
             </div>
           </div>
-          <div class="progress-message">{{ progressMessages[currentStep - 1] || 'Initializing Agent Bheem AI...' }}</div>
+          <div class="progress-message">{{ progressMessages[currentStep - 1] || 'Initializing platform...' }}</div>
         </div>
       </div>
 
@@ -144,11 +129,11 @@ export default {
     },
     title: {
       type: String,
-      default: 'Loading Agent Bheem AI'
+      default: 'Loading Platform'
     },
     subtitle: {
       type: String,
-      default: 'Initializing Agent Bheem AI workspace...'
+      default: 'Initializing intelligent workspace...'
     },
     showSuccess: {
       type: Boolean,
@@ -165,10 +150,10 @@ export default {
     const progressPercentage = computed(() => (currentStep.value / 4) * 100)
     
     const progressMessages = [
-      'Initializing Agent Bheem AI...',
+      'Initializing platform...',
       'Loading intelligent features...',
-      'Preparing AI workspace...',
-      'Agent Bheem AI Ready!'
+      'Preparing workspace...',
+      'Platform Ready!'
     ]
 
     const getParticleStyle = () => {
@@ -364,25 +349,57 @@ export default {
   align-items: center;
   text-align: center;
   z-index: 10;
-  max-width: 500px;
+  max-width: 550px;
   padding: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
 /* Brand section */
 .brand-section {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
+  animation: slideInUp 1s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .logo-container {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .logo-inner {
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   position: relative;
   z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bheem-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: brightness(1.3) contrast(1.2) drop-shadow(0 8px 25px rgba(255,255,255,0.3));
+  animation: logoGlow 3s ease-in-out infinite;
+  transition: all 0.4s ease;
 }
 
 .logo-svg {
@@ -413,8 +430,14 @@ export default {
 }
 
 @keyframes logoGlow {
-  0%, 100% { filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5)); }
-  50% { filter: drop-shadow(0 0 20px rgba(118, 75, 162, 0.8)); }
+  0%, 100% { 
+    filter: brightness(1.3) contrast(1.2) drop-shadow(0 8px 25px rgba(255,255,255,0.3));
+    transform: scale(1);
+  }
+  50% { 
+    filter: brightness(1.5) contrast(1.3) drop-shadow(0 12px 35px rgba(255,255,255,0.5));
+    transform: scale(1.05);
+  }
 }
 
 @keyframes ringRotate {
@@ -423,19 +446,26 @@ export default {
 }
 
 .brand-name {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  font-weight: 800;
   color: white;
-  margin: 0 0 10px 0;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  animation: titleGlow 2s ease-in-out infinite alternate;
+  margin: 0 0 12px 0;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  animation: titleGlow 2.5s ease-in-out infinite alternate;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
 }
 
 .brand-tagline {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-weight: 300;
+  margin: 0 0 20px 0;
+  font-weight: 400;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.95;
 }
 
 @keyframes titleGlow {
@@ -514,9 +544,10 @@ export default {
 /* Spinner */
 .spinner-container {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin-bottom: 40px;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 45px;
+  animation: slideInUp 1s ease-out 0.2s both;
 }
 
 .spinner-ring {
@@ -685,28 +716,36 @@ export default {
 
 /* Loading text */
 .loading-text {
-  margin-bottom: 40px;
+  margin-bottom: 45px;
+  animation: slideInUp 1s ease-out 0.3s both;
 }
 
 .loading-title {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.2rem;
+  font-weight: 700;
   color: white;
-  margin: 0 0 10px 0;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin: 0 0 12px 0;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
 }
 
 .loading-subtitle {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
-  font-weight: 300;
+  font-weight: 400;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Progress indicator */
 .progress-container {
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
+  animation: slideInUp 1s ease-out 0.6s both;
 }
 
 .progress-bar {

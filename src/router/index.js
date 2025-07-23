@@ -30,6 +30,12 @@ const routes = [
     component: () => import('@/views/ApiTestView.vue')
   },
   {
+    path: '/organization-chart',
+    name: 'OrganizationChart',
+    component: () => import('@/views/OrganizationChartView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/login'
   }

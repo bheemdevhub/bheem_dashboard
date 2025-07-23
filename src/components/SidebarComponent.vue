@@ -4,11 +4,7 @@
       <!-- Logo and Brand -->
       <div class="sidebar-brand">
         <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L22 7L12 12L2 7L12 2Z" fill="currentColor" opacity="0.9"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+          <img src="@/assets/images/bheemlogo.png" alt="Agent Bheem Logo" class="bheem-logo">
         </div>
         <div v-if="!isCollapsed" class="brand-content">
           <span class="brand-text">Agent Bheem</span>
@@ -28,6 +24,18 @@
     <!-- Navigation Menu -->
     <nav class="sidebar-nav">
       <ul class="nav-list">
+        <li class="nav-item">
+          <router-link to="/dashboard" class="nav-link" :class="{ active: $route.name === 'Dashboard' }" @click="setActiveLink('dashboard')">
+            <div class="nav-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+              </svg>
+            </div>
+            <span v-if="!isCollapsed" class="nav-text">Dashboard</span>
+          </router-link>
+        </li>
+
         <li class="nav-item">
           <a href="#" class="nav-link" @click="setActiveLink('approvals')">
             <div class="nav-icon">
@@ -162,15 +170,15 @@
         </li>
 
         <li class="nav-item">
-          <a href="#" class="nav-link" @click="setActiveLink('organisation-chart')">
+          <router-link to="/organization-chart" class="nav-link" @click="setActiveLink('organisation-chart')">
             <div class="nav-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10M9 9l1 1v4h4v-4l1-1"></path>
               </svg>
             </div>
             <span v-if="!isCollapsed" class="nav-text">Organisation Chart</span>
-          </a>
+          </router-link>
         </li>
       </ul>
     </nav>
@@ -298,6 +306,14 @@ export default {
   justify-content: center;
   color: white;
   flex-shrink: 0;
+  padding: 0.25rem;
+}
+
+.logo-icon .bheem-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(1.2);
 }
 
 .brand-text {
@@ -381,7 +397,8 @@ export default {
   color: white;
 }
 
-.nav-link.active {
+.nav-link.active,
+.nav-link.router-link-active {
   background: linear-gradient(90deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
   color: white;
   border-right: 3px solid #667eea;

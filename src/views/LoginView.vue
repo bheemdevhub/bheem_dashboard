@@ -23,19 +23,16 @@
         <div class="brand-content">
           <div class="logo-container">
             <div class="logo-icon-modern">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L22 7L12 12L2 7L12 2Z" fill="currentColor" opacity="0.9"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-              </svg>
+              <img src="@/assets/images/bheemlogo.png" alt="Platform Logo" class="bheem-logo">
             </div>
-            <h1 class="brand-title">Agent Bheem</h1>
-            <span class="brand-badge">AI Edition</span>
+            <div class="brand-info">
+              <span class="brand-badge">Enterprise Edition</span>
+            </div>
           </div>
           
           <div class="brand-description">
-            <h2 class="tagline">Transform Your AI Experience</h2>
-            <p class="brand-text">Experience next-generation AI with Agent Bheem's intelligent automation that adapts to your workflow and delivers insights that matter.</p>
+            <h2 class="tagline">Transform Your Business Experience</h2>
+            <p class="brand-text">Experience next-generation enterprise resource planning with intelligent automation that adapts to your workflow and delivers insights that matter.</p>
           </div>
           
           <!-- Feature highlights with animations -->
@@ -49,8 +46,8 @@
                 </svg>
               </div>
               <div class="feature-content">
-                <h4>AI-Powered Insights</h4>
-                <p>Smart analytics that learn from your data</p>
+                <h4>Smart Analytics</h4>
+                <p>Intelligent insights that learn from your data</p>
               </div>
             </div>
             
@@ -62,7 +59,7 @@
                 </svg>
               </div>
               <div class="feature-content">
-                <h4>Agent Bheem AI Security</h4>
+                <h4>Enterprise Security</h4>
                 <p>Bank-level encryption & compliance</p>
               </div>
             </div>
@@ -92,7 +89,7 @@
             </div>
             <div class="stat-item">
               <div class="stat-number">500+</div>
-              <div class="stat-label">AI Deployments</div>
+              <div class="stat-label">Enterprise Clients</div>
             </div>
           </div>
         </div>
@@ -104,14 +101,11 @@
           <div class="form-header">
             <div class="form-logo">
               <div class="mini-logo">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L22 7L12 12L2 7L12 2Z" fill="currentColor" opacity="0.8"/>
-                  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
+                <img src="@/assets/images/bheemlogo.png" alt="Platform Logo" class="mini-bheem-logo">
               </div>
             </div>
             <h2 class="form-title">Welcome Back</h2>
-            <p class="form-subtitle">Sign in to access your AI workspace</p>
+            <p class="form-subtitle">Sign in to access your intelligent workspace</p>
           </div>
 
 
@@ -237,7 +231,7 @@
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                 </svg>
-                Access Agent Bheem AI
+                Login
               </span>
             </button>
           </form>
@@ -526,8 +520,18 @@ export default {
 .login-background {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b73e8 100%);
   z-index: -1;
+  animation: backgroundShift 10s ease-in-out infinite;
+}
+
+@keyframes backgroundShift {
+  0%, 100% { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5b73e8 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #5b73e8 0%, #667eea 50%, #764ba2 100%);
+  }
 }
 
 .gradient-overlay {
@@ -977,65 +981,124 @@ export default {
 
 /* Branding Section Enhancements */
 .branding-section {
-  padding: 3rem;
+  padding: 4rem 3rem;
   color: white;
-}
-
-.brand-content {
-  max-width: 600px;
-}
-
-.logo-container {
-  margin-bottom: 3rem;
-}
-
-.logo-icon-modern {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+}
+
+.brand-content {
+  max-width: 650px;
+  width: 100%;
+}
+
+.logo-container {
+  margin-bottom: 1.25rem;
+  text-align: center;
+  animation: slideInUp 1s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo-icon-modern {
+  width: 200px;
+  height: 200px;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 0.25rem;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  animation: pulse 2s ease-in-out infinite;
+  animation: logoFloat 3s ease-in-out infinite;
+  position: relative;
+  overflow: visible;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.logo-icon-modern .bheem-logo {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  filter: brightness(1.4) contrast(1.3) drop-shadow(0 8px 20px rgba(0,0,0,0.4)) drop-shadow(0 0 40px rgba(255,255,255,0.1));
+  z-index: 1;
+  transition: all 0.4s ease;
 }
 
-.logo-icon-modern svg {
-  width: 40px;
-  height: 40px;
+.logo-icon-modern:hover .bheem-logo {
+  transform: scale(1.08);
+  filter: brightness(1.5) contrast(1.4) drop-shadow(0 12px 30px rgba(0,0,0,0.5)) drop-shadow(0 0 60px rgba(255,255,255,0.2));
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-12px) scale(1.05); }
+}
+
+.brand-info {
+  text-align: left;
+  margin-left: 0;
 }
 
 .brand-title {
-  font-size: 3rem;
-  font-weight: 800;
-  margin: 0 0 0.5rem 0;
-  background: linear-gradient(135deg, #ffffff, #f0f9ff);
+  font-size: 4rem;
+  font-weight: 900;
+  margin: 0 0 0.75rem 0;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  0% { 
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+  }
+  100% { 
+    text-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+  }
 }
 
 .brand-badge {
   display: inline-block;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #000;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-left: 1rem;
-  animation: shimmer 2s ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.95);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
 }
 
 @keyframes shimmer {
@@ -1186,36 +1249,127 @@ export default {
 
 .form-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .mini-logo {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 12px;
+  width: 140px;
+  height: 140px;
+  background: transparent;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1rem;
-  color: white;
+  margin: 0 auto 0.5rem auto;
+  animation: miniLogoFloat 2.5s ease-in-out infinite;
+  position: relative;
+  overflow: visible;
 }
 
-.mini-logo svg {
-  width: 24px;
-  height: 24px;
+@keyframes miniLogoFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.08); }
+}
+
+.mini-bheem-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: brightness(1.3) contrast(1.2) drop-shadow(0 6px 18px rgba(102, 126, 234, 0.4)) drop-shadow(0 0 30px rgba(102, 126, 234, 0.2));
+  z-index: 1;
+  transition: all 0.4s ease;
+}
+
+.mini-logo:hover .mini-bheem-logo {
+  transform: scale(1.12);
+  filter: brightness(1.4) contrast(1.3) drop-shadow(0 8px 24px rgba(102, 126, 234, 0.5)) drop-shadow(0 0 40px rgba(102, 126, 234, 0.3));
 }
 
 .form-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #1f2937 0%, #374151 30%, #4b5563 60%, #667eea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.03em;
+  text-align: center;
+  animation: formTitleSlide 1s ease-out;
+  position: relative;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: default;
+  transition: all 0.3s ease;
+}
+
+.form-title:hover {
+  transform: scale(1.02);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 30%, #5b73e8 60%, #1f2937 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.form-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+  animation: titleUnderline 1s ease-out 0.5s both;
+  transition: all 0.3s ease;
+}
+
+.form-title:hover::after {
+  width: 80px;
+  background: linear-gradient(90deg, #764ba2, #667eea, #5b73e8);
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
+}
+
+@keyframes titleUnderline {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 60px;
+    opacity: 1;
+  }
+}
+
+@keyframes formTitleSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-subtitle {
   color: #6b7280;
-  margin: 0 0 2rem 0;
+  margin: 0.5rem 0 1.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+  animation: subtitleSlide 1s ease-out 0.2s both;
+}
+
+@keyframes subtitleSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Enhanced Social Login */
@@ -1795,6 +1949,20 @@ export default {
   .branding-section {
     display: none;
   }
+  
+  .logo-icon-modern {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .logo-icon-modern .bheem-logo {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .brand-title {
+    font-size: 2.75rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1807,7 +1975,35 @@ export default {
   }
   
   .form-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
+  }
+  
+  .form-title::after {
+    width: 40px;
+  }
+  
+  .mini-logo {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .mini-bheem-logo {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .logo-icon-modern {
+    width: 130px;
+    height: 130px;
+  }
+  
+  .logo-icon-modern .bheem-logo {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .brand-title {
+    font-size: 2.25rem;
   }
   
   .stats-container {

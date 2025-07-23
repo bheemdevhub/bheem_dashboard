@@ -18,11 +18,7 @@
           <div class="footer-brand">
             <div class="logo-container">
               <div class="logo-icon">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L22 7L12 12L2 7L12 2Z" fill="currentColor" opacity="0.9"/>
-                  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
+                <img src="@/assets/images/bheemlogo.png" alt="Agent Bheem Logo" class="bheem-logo">
               </div>
               <div class="logo-pulse"></div>
             </div>
@@ -331,11 +327,14 @@ export default {
   position: relative;
   z-index: 2;
   box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+  padding: 0.25rem;
 }
 
-.logo-icon svg {
+.logo-icon .bheem-logo {
   width: 1.5rem;
   height: 1.5rem;
+  object-fit: contain;
+  filter: brightness(1.2);
 }
 
 .logo-pulse {

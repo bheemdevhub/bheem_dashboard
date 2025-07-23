@@ -593,6 +593,38 @@ export default {
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+/* Ultra-wide screen optimization */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 2000px;
+    padding: 0 3rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 3rem;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 3fr 1fr;
+    gap: 3rem;
+  }
+  
+  .actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+  }
+  
+  .welcome-section {
+    padding: 4rem;
+    margin-bottom: 3.5rem;
+  }
+  
+  .dashboard-main {
+    padding: 3rem 0;
+  }
+}
+
 .dashboard-layout {
   min-height: 100vh;
   display: flex;
@@ -614,13 +646,13 @@ export default {
 
 .dashboard-main {
   flex: 1;
-  padding: 2rem 0;
+  padding: 2.5rem 0;
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 2.5rem;
 }
 
 /* Welcome Section */
@@ -630,8 +662,8 @@ export default {
   align-items: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
   border-radius: var(--radius-xl);
-  padding: 3rem;
-  margin-bottom: 2.5rem;
+  padding: 3.5rem;
+  margin-bottom: 3rem;
   color: white;
   position: relative;
   overflow: hidden;
@@ -739,8 +771,8 @@ export default {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem;
 }
 
 .stat-card {
@@ -865,8 +897,8 @@ export default {
 
 .charts-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 2.5fr 1fr;
+  gap: 2.5rem;
 }
 
 .chart-card, .activity-card {
@@ -1072,8 +1104,8 @@ export default {
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
 }
 
 .action-card {
@@ -1149,6 +1181,13 @@ export default {
 }
 
 /* Responsive Design */
+@media (max-width: 1400px) {
+  .container {
+    max-width: 1200px;
+    padding: 0 2rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .charts-grid {
     grid-template-columns: 1fr;

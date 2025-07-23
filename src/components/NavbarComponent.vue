@@ -7,11 +7,7 @@
         <div class="navbar-brand">
           <div class="logo-icon">
             <div class="logo-animation">
-              <svg class="logo-svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L22 7L12 12L2 7L12 2Z" fill="currentColor" opacity="0.9"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-              </svg>
+              <img src="@/assets/images/bheemlogo.png" alt="Agent Bheem Logo" class="bheem-logo">
               <div class="logo-pulse"></div>
             </div>
           </div>
@@ -307,9 +303,9 @@ export default {
 
 .logo-icon {
   position: relative;
-  width: 3rem;
-  height: 3rem;
-  background: rgba(255, 255, 255, 0.15);
+  width: 3.5rem;
+  height: 3.5rem;
+  background: transparent;
   border-radius: 1rem;
   display: flex;
   align-items: center;
@@ -335,14 +331,17 @@ export default {
   height: 2rem;
 }
 
-.logo-svg {
+.logo-animation .bheem-logo {
   width: 100%;
   height: 100%;
+  object-fit: contain;
   transition: transform 0.3s ease;
+  filter: brightness(1.3) contrast(1.2) drop-shadow(0 2px 8px rgba(0,0,0,0.2));
 }
 
-.logo-icon:hover .logo-svg {
-  transform: rotate(15deg) scale(1.1);
+.logo-icon:hover .bheem-logo {
+  transform: rotate(15deg) scale(1.15);
+  filter: brightness(1.4) contrast(1.3) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
 }
 
 .logo-pulse {

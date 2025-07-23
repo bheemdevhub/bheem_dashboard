@@ -18,14 +18,10 @@
           <!-- Logo -->
           <div class="logo-section">
             <div class="logo-icon">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L22 7L12 12L2 7L12 2Z" fill="currentColor" opacity="0.9"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+              <img src="@/assets/images/bheemlogo.png" alt="Agent Bheem Logo" class="bheem-logo">
             </div>
             <div class="logo-text">
-              <h1>Agent Bheem</h1>
+        
               <span>Company Registration</span>
             </div>
           </div>
