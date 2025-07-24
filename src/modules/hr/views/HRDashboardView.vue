@@ -81,7 +81,10 @@
                   </div>
                 </div>
                 <div class="module-content">
-                  <EmployeeList />
+                  <EmployeeList 
+                    @add-employee="handleAddEmployee"
+                    @edit-employee="handleEditEmployee" 
+                  />
                 </div>
               </div>
 
@@ -269,6 +272,14 @@
         <FooterComponent />
       </div>
     </div>
+
+    <!-- Add/Edit Employee Modal -->
+    <AddEmployee 
+      :is-visible="showModal"
+      :employee="editingEmployee"
+      @success="handleFormSuccess"
+      @close="closeModal"
+    />
   </div>
 </template>
 
@@ -278,6 +289,7 @@ import SidebarComponent from '@/components/SidebarComponent.vue'
 import NavbarComponent from '@/components/NavbarComponent.vue'
 import FooterComponent from '@/components/FooterComponent.vue'
 import EmployeeList from '../components/Employee/EmployeeList.vue'
+import AddEmployee from '../components/Employee/AddEmployee.vue'
 import { HRApiService } from '../services/hrApiService'
 
 export default {
@@ -286,7 +298,8 @@ export default {
     SidebarComponent,
     NavbarComponent,
     FooterComponent,
-    EmployeeList
+    EmployeeList,
+    AddEmployee
   },
   setup() {
     // Reactive data
@@ -296,6 +309,10 @@ export default {
       active: 0,
       inactive: 0
     })
+    
+    // Modal state
+    const showModal = ref(false)
+    const editingEmployee = ref(null)
 
     // Methods
     const handleSidebarToggle = (collapsed) => {
@@ -318,6 +335,27 @@ export default {
       }
     }
 
+    // Modal handlers
+    const handleAddEmployee = () => {
+      editingEmployee.value = null
+      showModal.value = true
+    }
+
+    const handleEditEmployee = (employee) => {
+      editingEmployee.value = employee
+      showModal.value = true
+    }
+
+    const closeModal = () => {
+      showModal.value = false
+      editingEmployee.value = null
+    }
+
+    const handleFormSuccess = () => {
+      closeModal()
+      fetchEmployeeStats() // Refresh stats after adding/editing employee
+    }
+
     // Initialize
     onMounted(() => {
       fetchEmployeeStats()
@@ -326,8 +364,14 @@ export default {
     return {
       sidebarCollapsed,
       employeeStats,
+      showModal,
+      editingEmployee,
       handleSidebarToggle,
-      fetchEmployeeStats
+      fetchEmployeeStats,
+      handleAddEmployee,
+      handleEditEmployee,
+      closeModal,
+      handleFormSuccess
     }
   }
 }

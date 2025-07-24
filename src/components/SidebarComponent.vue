@@ -50,7 +50,7 @@
         </li>
 
         <li class="nav-item">
-          <router-link to="/hr-dashboard" class="nav-link" :class="{ active: $route.name === 'HRDashboard' }" @click="setActiveLink('hr')">
+          <router-link to="/hr-dashboard" class="nav-link" :class="{ active: $route.name === 'HR' }" @click="setActiveLink('hr')">
             <div class="nav-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

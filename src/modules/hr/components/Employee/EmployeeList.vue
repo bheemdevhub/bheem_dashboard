@@ -141,11 +141,6 @@
                 </td>
                 <td class="actions" @click.stop>
                   <div class="action-buttons">
-                    <button @click="handleEditEmployee(employee)" class="action-btn edit-btn" title="Edit Employee">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                    </button>
                     <button @click="handleDeleteEmployee(employee)" class="action-btn delete-btn" title="Delete Employee">
                       <svg viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 2a1 1 0 10-2 0v6a1 1 0 102 0V7zm3 0a1 1 0 10-2 0v6a1 1 0 102 0V7zm3 0a1 1 0 10-2 0v6a1 1 0 102 0V7z" clip-rule="evenodd" />
@@ -199,14 +194,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Add/Edit Employee Modal -->
-    <AddEmployee 
-      :is-visible="showModal"
-      :employee="editingEmployee"
-      @success="handleFormSuccess"
-      @close="closeModal"
-    />
   </div>
 </template>
 
@@ -214,24 +201,21 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import EmployeeContent from './EmployeeContent.vue'
-import AddEmployee from './AddEmployee.vue'
 import Swal from 'sweetalert2'
 
 export default {
   name: 'EmployeeList',
   components: {
-    EmployeeContent,
-    AddEmployee
+    EmployeeContent
   },
-  setup() {
+  emits: ['add-employee', 'edit-employee'],
+  setup(props, { emit }) {
     // Reactive data
     const employees = ref([])
     const selectedEmployee = ref(null)
     const loading = ref(false)
     const error = ref(null)
     const searchText = ref('')
-    const showModal = ref(false)
-    const editingEmployee = ref(null)
     
     // Sorting
     const sortField = ref('employee_code')
@@ -383,13 +367,11 @@ export default {
     }
     
     const handleAddEmployee = () => {
-      editingEmployee.value = null
-      showModal.value = true
+      emit('add-employee')
     }
-    
+
     const handleEditEmployee = (employee) => {
-      editingEmployee.value = employee
-      showModal.value = true
+      emit('edit-employee', employee)
     }
     
     const handleDeleteEmployee = async (employee) => {
@@ -435,24 +417,6 @@ export default {
       }
     }
     
-    const closeModal = () => {
-      showModal.value = false
-      editingEmployee.value = null
-    }
-    
-    const handleFormSuccess = () => {
-      closeModal()
-      fetchEmployees()
-      
-      Swal.fire({
-        title: 'Success!',
-        text: `Employee ${editingEmployee.value ? 'updated' : 'created'} successfully.`,
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      })
-    }
-    
     // Watch for search changes to reset pagination
     watch(searchText, () => {
       currentPage.value = 1
@@ -470,8 +434,6 @@ export default {
       loading,
       error,
       searchText,
-      showModal,
-      editingEmployee,
       sortField,
       sortAsc,
       currentPage,
@@ -496,9 +458,7 @@ export default {
       selectEmployee,
       handleAddEmployee,
       handleEditEmployee,
-      handleDeleteEmployee,
-      closeModal,
-      handleFormSuccess
+      handleDeleteEmployee
     }
   }
 }

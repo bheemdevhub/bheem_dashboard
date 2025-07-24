@@ -33,6 +33,20 @@
             </div>
             <div class="form-grid">
               <div class="form-group">
+                <label class="form-label">Title</label>
+                <select 
+                  v-model="formData.title" 
+                  class="form-input"
+                >
+                  <option value="">Select Title</option>
+                  <option value="Mr.">Mr.</option>
+                  <option value="Ms.">Ms.</option>
+                  <option value="Mrs.">Mrs.</option>
+                  <option value="Dr.">Dr.</option>
+                </select>
+              </div>
+
+              <div class="form-group">
                 <label class="form-label required">First Name</label>
                 <input 
                   v-model="formData.first_name" 
@@ -67,6 +81,16 @@
                 />
                 <span v-if="errors.last_name" class="error-text">{{ errors.last_name }}</span>
               </div>
+
+              <div class="form-group">
+                <label class="form-label">Suffix</label>
+                <input 
+                  v-model="formData.suffix" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Jr., Sr., III, etc."
+                />
+              </div>
               
               <div class="form-group">
                 <label class="form-label">Preferred Name</label>
@@ -99,11 +123,25 @@
                   required
                 >
                   <option value="">Select Gender</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                 </select>
                 <span v-if="errors.gender" class="error-text">{{ errors.gender }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Marital Status</label>
+                <select 
+                  v-model="formData.marital_status" 
+                  class="form-input"
+                >
+                  <option value="">Select Status</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="widowed">Widowed</option>
+                </select>
               </div>
               
               <div class="form-group">
@@ -127,6 +165,16 @@
                   required 
                 />
                 <span v-if="errors.nationality" class="error-text">{{ errors.nationality }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">National ID</label>
+                <input 
+                  v-model="formData.national_id" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter national ID/SSN/Aadhar"
+                />
               </div>
             </div>
           </div>
@@ -163,6 +211,26 @@
                   required 
                 />
                 <span v-if="errors.hire_date" class="error-text">{{ errors.hire_date }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Termination Date</label>
+                <input 
+                  v-model="formData.termination_date" 
+                  type="date" 
+                  class="form-input"
+                  placeholder="Leave empty if active"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Probation End Date</label>
+                <input 
+                  v-model="formData.probation_end_date" 
+                  type="date" 
+                  class="form-input"
+                  placeholder="End of probation period"
+                />
               </div>
               
               <div class="form-group">
@@ -204,6 +272,23 @@
                 </select>
                 <span v-if="errors.position_id" class="error-text">{{ errors.position_id }}</span>
               </div>
+
+              <div class="form-group">
+                <label class="form-label">Manager</label>
+                <select 
+                  v-model="formData.manager_id" 
+                  class="form-input"
+                >
+                  <option value="">Select Manager</option>
+                  <option 
+                    v-for="manager in managers" 
+                    :key="manager.id" 
+                    :value="manager.id"
+                  >
+                    {{ manager.first_name }} {{ manager.last_name }}
+                  </option>
+                </select>
+              </div>
               
               <div class="form-group">
                 <label class="form-label required">Employment Type</label>
@@ -220,6 +305,22 @@
                   <option value="Intern">Intern</option>
                 </select>
                 <span v-if="errors.employment_type" class="error-text">{{ errors.employment_type }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Employment Status</label>
+                <select 
+                  v-model="formData.employment_status" 
+                  class="form-input"
+                  :class="{ 'error': errors.employment_status }"
+                  required
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Terminated">Terminated</option>
+                  <option value="On Leave">On Leave</option>
+                </select>
+                <span v-if="errors.employment_status" class="error-text">{{ errors.employment_status }}</span>
               </div>
               
               <div class="form-group">
@@ -255,6 +356,77 @@
                   </select>
                 </div>
                 <span v-if="errors.base_salary" class="error-text">{{ errors.base_salary }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Hourly Rate</label>
+                <div class="input-group">
+                  <input 
+                    v-model="formData.hourly_rate" 
+                    type="number" 
+                    step="0.01"
+                    class="form-input"
+                    placeholder="Enter hourly rate (if applicable)"
+                  />
+                  <span class="currency-label">{{ formData.currency }}</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Pay Frequency</label>
+                <select 
+                  v-model="formData.pay_frequency" 
+                  class="form-input"
+                  required
+                >
+                  <option value="Weekly">Weekly</option>
+                  <option value="Bi-Weekly">Bi-Weekly</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Annually">Annually</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Company ID</label>
+                <input 
+                  v-model="formData.company_id" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Company ID (auto-assigned if empty)"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input 
+                  v-model="formData.password" 
+                  type="password" 
+                  class="form-input"
+                  placeholder="Enter temporary password for employee login"
+                />
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input 
+                    v-model="formData.is_active" 
+                    type="checkbox" 
+                    class="checkbox-input"
+                  />
+                  <span class="checkbox-text">Employee is Active</span>
+                </label>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input 
+                    v-model="formData.is_superadmin" 
+                    type="checkbox" 
+                    class="checkbox-input"
+                  />
+                  <span class="checkbox-text">Super Administrator</span>
+                </label>
               </div>
             </div>
           </div>
@@ -292,6 +464,26 @@
               </div>
               
               <div class="form-group">
+                <label class="form-label">Primary Phone</label>
+                <input 
+                  v-model="contactData.phone_primary" 
+                  type="tel" 
+                  class="form-input"
+                  placeholder="Enter primary phone number"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Secondary Phone</label>
+                <input 
+                  v-model="contactData.phone_secondary" 
+                  type="tel" 
+                  class="form-input"
+                  placeholder="Enter secondary phone number"
+                />
+              </div>
+              
+              <div class="form-group">
                 <label class="form-label required">Mobile Phone</label>
                 <input 
                   v-model="contactData.phone_mobile" 
@@ -302,6 +494,16 @@
                   required 
                 />
                 <span v-if="errors.phone_mobile" class="error-text">{{ errors.phone_mobile }}</span>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Work Phone</label>
+                <input 
+                  v-model="contactData.phone_work" 
+                  type="tel" 
+                  class="form-input"
+                  placeholder="Enter work phone number"
+                />
               </div>
               
               <div class="form-group">
@@ -328,6 +530,23 @@
                   required 
                 />
                 <span v-if="errors.emergency_contact_phone" class="error-text">{{ errors.emergency_contact_phone }}</span>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Emergency Contact Relationship</label>
+                <select 
+                  v-model="contactData.emergency_contact_relationship" 
+                  class="form-input"
+                >
+                  <option value="Family">Family</option>
+                  <option value="Friend">Friend</option>
+                  <option value="Spouse">Spouse</option>
+                  <option value="Parent">Parent</option>
+                  <option value="Sibling">Sibling</option>
+                  <option value="Husband">Husband</option>
+                  <option value="Wife">Wife</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
             </div>
           </div>
@@ -405,6 +624,142 @@
                 />
                 <span v-if="errors.country" class="error-text">{{ errors.country }}</span>
               </div>
+
+              <div class="form-group">
+                <label class="form-label">Address Line 2</label>
+                <input 
+                  v-model="addressData.line2" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Apartment, suite, unit, building, floor, etc."
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Bank Account Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2 10h20l-2 12H4l-2-12zM2 10l2-6h16l2 6M7 14h10M7 17h6"/>
+              </svg>
+              <h3>Bank Account Information</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Account Name</label>
+                <input 
+                  v-model="bankAccountData.account_name" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter account holder name"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Account Number</label>
+                <input 
+                  v-model="bankAccountData.account_number" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter account number"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Bank Name</label>
+                <input 
+                  v-model="bankAccountData.bank_name" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter bank name"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Routing Number</label>
+                <input 
+                  v-model="bankAccountData.routing_number" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter routing/IFSC number"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Account Type</label>
+                <select 
+                  v-model="bankAccountData.account_type" 
+                  class="form-input"
+                >
+                  <option value="SAVINGS">Savings</option>
+                  <option value="CHECKING">Checking</option>
+                  <option value="CURRENT">Current</option>
+                </select>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input 
+                    v-model="bankAccountData.is_primary" 
+                    type="checkbox" 
+                    class="checkbox-input"
+                  />
+                  <span class="checkbox-text">Primary Account</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passport Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <h3>Passport Information</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Passport Number</label>
+                <input 
+                  v-model="passportData.passport_number" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter passport number"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Expiry Date</label>
+                <input 
+                  v-model="passportData.expiry_date" 
+                  type="date" 
+                  class="form-input"
+                  placeholder="Select expiry date"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Country of Issue</label>
+                <input 
+                  v-model="passportData.country_of_issue" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter issuing country"
+                />
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                  <input 
+                    v-model="passportData.is_primary" 
+                    type="checkbox" 
+                    class="checkbox-input"
+                  />
+                  <span class="checkbox-text">Primary Passport</span>
+                </label>
+              </div>
             </div>
           </div>
         </form>
@@ -452,6 +807,7 @@ export default {
     const errors = ref({})
     const departments = ref([])
     const positions = ref([])
+    const managers = ref([])
 
     // Form data
     const formData = reactive({
@@ -459,27 +815,42 @@ export default {
       middle_name: '',
       last_name: '',
       preferred_name: '',
+      title: '',
+      suffix: '',
       date_of_birth: '',
       gender: '',
+      marital_status: '',
       nationality: '',
       blood_group: '',
       employee_code: '',
       hire_date: '',
+      termination_date: null,
+      probation_end_date: '',
       department_id: '',
       position_id: '',
+      manager_id: '',
       employment_type: '',
       employment_status: 'Active',
       work_location: '',
       base_salary: '',
+      hourly_rate: '',
       currency: 'USD',
-      pay_frequency: 'MONTHLY',
-      is_active: true
+      pay_frequency: 'Bi-Weekly',
+      national_id: '',
+      is_active: true,
+      is_superadmin: false,
+      password: '',
+      company_id: ''
     })
 
     const contactData = reactive({
       email_primary: '',
       email_secondary: '',
+      phone_primary: '',
+      phone_secondary: '',
       phone_mobile: '',
+      phone_work: '',
+      is_active: true,
       emergency_contact_name: '',
       emergency_contact_phone: '',
       emergency_contact_relationship: 'Family'
@@ -493,6 +864,22 @@ export default {
       state: '',
       postal_code: '',
       country: ''
+    })
+
+    const bankAccountData = reactive({
+      account_name: '',
+      account_number: '',
+      bank_name: '',
+      routing_number: '',
+      account_type: 'SAVINGS',
+      is_primary: true
+    })
+
+    const passportData = reactive({
+      passport_number: '',
+      expiry_date: '',
+      country_of_issue: '',
+      is_primary: true
     })
 
     const isEdit = computed(() => !!props.employee)
@@ -537,6 +924,12 @@ export default {
           const lookups = response.data
           departments.value = lookups.filter(item => item.type === 'department' && item.is_active)
           positions.value = lookups.filter(item => item.type === 'position' && item.is_active)
+        }
+
+        // Load managers (employees who can be managers)
+        const employeesResponse = await HRApiService.getEmployees()
+        if (employeesResponse.success) {
+          managers.value = employeesResponse.data.filter(emp => emp.is_active)
         }
       } catch (error) {
         console.error('Error loading lookups:', error)
@@ -613,18 +1006,30 @@ export default {
         ...addressData
       }]
 
+      // Prepare bank accounts array (only if data provided)
+      const bank_accounts = []
+      if (bankAccountData.account_number || bankAccountData.bank_name) {
+        bank_accounts.push({...bankAccountData})
+      }
+
+      // Prepare passports array (only if data provided)
+      const passports = []
+      if (passportData.passport_number) {
+        passports.push({...passportData})
+      }
+
       // Add nested data
       data.contacts = contacts
       data.addresses = addresses
-      data.bank_accounts = []
-      data.passports = []
+      data.bank_accounts = bank_accounts
+      data.passports = passports
       data.social_profiles = []
 
       // Set default values
-      data.is_superadmin = false
+      data.is_superadmin = formData.is_superadmin || false
       
-      // Generate password for new employees
-      if (!isEdit.value) {
+      // Generate password for new employees if not provided
+      if (!isEdit.value && !data.password) {
         data.password = 'TempPassword123!'
       }
 
@@ -709,8 +1114,11 @@ export default {
       formData,
       contactData,
       addressData,
+      bankAccountData,
+      passportData,
       departments,
       positions,
+      managers,
       isEdit,
       handleSubmit,
       closeModal
@@ -730,7 +1138,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   padding: 2rem;
   backdrop-filter: blur(4px);
 }
@@ -1163,5 +1571,76 @@ export default {
     background: #374151;
     border-color: #4b5563;
   }
+}
+
+/* Checkbox Styles */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.checkbox-input {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checkbox-input:checked {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.checkbox-text {
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+/* Input Group Styles */
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.input-group .form-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+  flex: 1;
+}
+
+.currency-select {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: none;
+  min-width: 80px;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.currency-label {
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-left: none;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 </style>
