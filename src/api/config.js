@@ -33,6 +33,14 @@ export const API_ENDPOINTS = {
     CREATE: '/api/hr/departments/',
     UPDATE: '/api/hr/departments/',
     DELETE: '/api/hr/departments/'
+  },
+
+  ATTENDANCE: {
+    LIST: '/api/hr/attendance/attendance',
+    CREATE: '/api/hr/attendance/attendance',
+    UPDATE: '/api/hr/attendance/attendance',
+    DELETE: '/api/hr/attendance/attendance',
+    BY_EMPLOYEE: '/api/hr/attendance/attendance/by-employee'
   }
 }
 

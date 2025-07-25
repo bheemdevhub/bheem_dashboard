@@ -191,40 +191,10 @@
 
               <!-- Third Row -->
               <div class="module-card">
-                <div class="module-header">
-                  <div class="module-icon">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                  </div>
-                  <div class="module-info">
-                    <h3 class="module-title">Job Offers</h3>
-                    <p class="module-description">Create and manage employment offers</p>
-                  </div>
-                  <div class="module-actions">
-                    <button class="action-btn primary">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                      </svg>
-                      Create Offer
-                    </button>
-                  </div>
-                </div>
-                <div class="module-content">
-                  <div class="coming-soon-content">
-                    <div class="coming-soon-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14,2 14,8 20,8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10,9 9,9 8,9"></polyline>
-                      </svg>
-                    </div>
-                    <h4>Coming Soon</h4>
-                    <p>Job offer management system will be available soon</p>
-                  </div>
-                </div>
+                <AttendanceWidget 
+                  @add-attendance="handleAddAttendance"
+                  @edit-attendance="handleEditAttendance"
+                />
               </div>
 
               <div class="module-card">
@@ -284,6 +254,14 @@
       @saved="handleJobRequisitionFormSuccess"
       @close="closeJobRequisitionModal"
     />
+
+    <!-- Add/Edit Attendance Modal -->
+    <AddAttendance 
+      :is-visible="showAttendanceModal"
+      :attendance="editingAttendance"
+      @success="handleAttendanceFormSuccess"
+      @close="closeAttendanceModal"
+    />
   </div>
 </template>
 
@@ -296,6 +274,8 @@ import EmployeeList from '../components/Employee/EmployeeList.vue'
 import AddEmployee from '../components/Employee/AddEmployee.vue'
 import JobRequisitionList from '../components/JobRequisition/JobRequisitionList.vue'
 import AddJobRequisition from '../components/JobRequisition/AddJobRequisition.vue'
+import AttendanceWidget from '../components/Attendance/AttendanceWidget.vue'
+import AddAttendance from '../components/Attendance/AddAttendance.vue'
 import { HRApiService } from '../services/hrApiService'
 
 export default {
@@ -307,7 +287,9 @@ export default {
     EmployeeList,
     AddEmployee,
     JobRequisitionList,
-    AddJobRequisition
+    AddJobRequisition,
+    AttendanceWidget,
+    AddAttendance
   },
   setup() {
     // Reactive data
@@ -328,6 +310,8 @@ export default {
     const editingEmployee = ref(null)
     const showJobRequisitionModal = ref(false)
     const editingJobRequisition = ref(null)
+    const showAttendanceModal = ref(false)
+    const editingAttendance = ref(null)
     
     // Component refs
     const employeeListRef = ref(null)
@@ -422,6 +406,27 @@ export default {
       }
     }
 
+    // Attendance modal handlers
+    const handleAddAttendance = () => {
+      editingAttendance.value = null
+      showAttendanceModal.value = true
+    }
+
+    const handleEditAttendance = (attendance) => {
+      editingAttendance.value = attendance
+      showAttendanceModal.value = true
+    }
+
+    const closeAttendanceModal = () => {
+      showAttendanceModal.value = false
+      editingAttendance.value = null
+    }
+
+    const handleAttendanceFormSuccess = () => {
+      closeAttendanceModal()
+      // Optionally refresh attendance data in the widget
+    }
+
     // Initialize
     onMounted(() => {
       fetchEmployeeStats()
@@ -440,6 +445,8 @@ export default {
       showJobRequisitionModal,
       editingJobRequisition,
       isEditingJobRequisition,
+      showAttendanceModal,
+      editingAttendance,
       employeeListRef,
       jobRequisitionListRef,
       handleSidebarToggle,
@@ -452,7 +459,11 @@ export default {
       handleAddJobRequisition,
       handleEditJobRequisition,
       closeJobRequisitionModal,
-      handleJobRequisitionFormSuccess
+      handleJobRequisitionFormSuccess,
+      handleAddAttendance,
+      handleEditAttendance,
+      closeAttendanceModal,
+      handleAttendanceFormSuccess
     }
   }
 }
