@@ -18,7 +18,18 @@
         </div>
       </div>
       
-
+      <div class="header-actions">
+        <button 
+          @click="handleEdit"
+          class="edit-btn"
+          title="Edit job requisition"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          </svg>
+          Edit
+        </button>
+      </div>
     </div>
 
     <!-- Status Section -->
@@ -63,40 +74,28 @@
             <span class="detail-value">{{ jobRequisition.experience_required || 'N/A' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Budget Range:</span>
-            <span class="detail-value">{{ getBudgetRange() }}</span>
+            <span class="detail-label">Salary Range:</span>
+            <span class="detail-value">{{ getSalaryRange() }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Currency:</span>
-            <span class="detail-value">{{ jobRequisition.currency || 'N/A' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Priority Level:</span>
-            <span class="detail-value">{{ getPriorityLevel() }}</span>
+            <span class="detail-label">Company:</span>
+            <span class="detail-value">{{ getCompanyName() }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Hiring Manager & Contact -->
+      <!-- Hiring Manager -->
       <div class="detail-section">
         <h3 class="section-title">
           <svg class="section-icon" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
           </svg>
-          Hiring Manager & Contact
+          Hiring Manager
         </h3>
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">Hiring Manager:</span>
             <span class="detail-value">{{ getHiringManagerName() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Contact Email:</span>
-            <span class="detail-value">{{ jobRequisition.contact_email || 'N/A' }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Contact Phone:</span>
-            <span class="detail-value">{{ jobRequisition.contact_phone || 'N/A' }}</span>
           </div>
         </div>
       </div>
@@ -111,20 +110,8 @@
         </h3>
         <div class="detail-grid">
           <div class="detail-item">
-            <span class="detail-label">Expected Start Date:</span>
-            <span class="detail-value">{{ formatDate(jobRequisition.expected_start_date) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Application Deadline:</span>
-            <span class="detail-value">{{ formatDate(jobRequisition.application_deadline) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Created Date:</span>
-            <span class="detail-value">{{ formatDate(jobRequisition.created_at) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Last Updated:</span>
-            <span class="detail-value">{{ formatDate(jobRequisition.updated_at) }}</span>
+            <span class="detail-label">Requisition Date:</span>
+            <span class="detail-value">{{ formatDate(jobRequisition.requisition_date) }}</span>
           </div>
         </div>
       </div>
@@ -142,19 +129,6 @@
         </div>
       </div>
 
-      <!-- Qualifications -->
-      <div class="detail-section full-width">
-        <h3 class="section-title">
-          <svg class="section-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Qualifications & Requirements
-        </h3>
-        <div class="description-content">
-          <p>{{ jobRequisition.qualifications || 'No qualifications specified.' }}</p>
-        </div>
-      </div>
-
       <!-- Skills -->
       <div class="detail-section full-width" v-if="jobRequisition.skills && jobRequisition.skills.length">
         <h3 class="section-title">
@@ -169,23 +143,11 @@
             :key="skill.id || skill"
             class="skill-tag"
           >
-            {{ typeof skill === 'string' ? skill : skill.name }}
+            {{ typeof skill === 'string' ? skill : (skill.name || skill.id) }}
           </span>
         </div>
       </div>
 
-      <!-- Additional Notes -->
-      <div class="detail-section full-width" v-if="jobRequisition.additional_notes">
-        <h3 class="section-title">
-          <svg class="section-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd" />
-          </svg>
-          Additional Notes
-        </h3>
-        <div class="description-content">
-          <p>{{ jobRequisition.additional_notes }}</p>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -199,8 +161,12 @@ export default {
       required: true
     }
   },
-  emits: ['refresh'],
-  setup(props) {
+  emits: ['refresh', 'edit'],
+  setup(props, { emit }) {
+
+    const handleEdit = () => {
+      emit('edit', props.jobRequisition)
+    }
 
     const getJobInitials = () => {
       if (!props.jobRequisition?.job_title) return 'JR'
@@ -231,25 +197,22 @@ export default {
       return props.jobRequisition.hiring_manager_name || 'N/A'
     }
 
-    const getBudgetRange = () => {
-      const min = props.jobRequisition.min_budget
-      const max = props.jobRequisition.max_budget
-      const currency = props.jobRequisition.currency || ''
+    const getSalaryRange = () => {
+      const min = props.jobRequisition.salary_min
+      const max = props.jobRequisition.salary_max
       
-      if (min && max) {
-        return `${currency}${min} - ${currency}${max}`
-      } else if (min) {
-        return `${currency}${min}+`
-      } else if (max) {
-        return `Up to ${currency}${max}`
+      if (min && max && min > 0 && max > 0) {
+        return `$${Number(min).toLocaleString()} - $${Number(max).toLocaleString()}`
+      } else if (min && min > 0) {
+        return `$${Number(min).toLocaleString()}+`
+      } else if (max && max > 0) {
+        return `Up to $${Number(max).toLocaleString()}`
       }
-      return 'N/A'
+      return 'Not specified'
     }
 
-    const getPriorityLevel = () => {
-      const priority = props.jobRequisition.priority_level
-      if (!priority) return 'N/A'
-      return priority.charAt(0).toUpperCase() + priority.slice(1)
+    const getCompanyName = () => {
+      return props.jobRequisition.company_name || 'N/A'
     }
 
     const formatDate = (dateString) => {
@@ -267,9 +230,10 @@ export default {
       getJobTypeName,
       getEmploymentTypeName,
       getHiringManagerName,
-      getBudgetRange,
-      getPriorityLevel,
-      formatDate
+      getSalaryRange,
+      getCompanyName,
+      formatDate,
+      handleEdit
     }
   }
 }

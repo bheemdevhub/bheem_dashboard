@@ -121,35 +121,27 @@
               <div class="module-card">
                 <div class="module-header">
                   <div class="module-icon">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div class="module-info">
                     <h3 class="module-title">Candidates</h3>
                     <p class="module-description">Track and manage job applicants and candidates</p>
                   </div>
-                  <div class="module-actions">
-                    <button class="action-btn primary">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                      </svg>
-                      Add Candidate
-                    </button>
+                  <div class="module-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ candidateStats.total }}</span>
+                      <span class="stat-text">Total</span>
+                    </div>
                   </div>
                 </div>
                 <div class="module-content">
-                  <div class="coming-soon-content">
-                    <div class="coming-soon-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m9 12 2 2 4-4"></path>
-                        <path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"></path>
-                        <path d="M21 12A9 9 0 1 1 12 3"></path>
-                      </svg>
-                    </div>
-                    <h4>Coming Soon</h4>
-                    <p>Candidate management system will be available soon</p>
-                  </div>
+                  <CandidateList 
+                    ref="candidateListRef"
+                    @add-candidate="handleAddCandidate"
+                    @edit-candidate="handleEditCandidate" 
+                  />
                 </div>
               </div>
 
@@ -157,35 +149,29 @@
                 <div class="module-header">
                   <div class="module-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                   </div>
                   <div class="module-info">
                     <h3 class="module-title">Interviews</h3>
                     <p class="module-description">Schedule and manage interview processes</p>
                   </div>
-                  <div class="module-actions">
-                    <button class="action-btn primary">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                      </svg>
-                      Schedule Interview
-                    </button>
+                  <div class="module-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ interviewStats.total }}</span>
+                      <span class="stat-text">Total</span>
+                    </div>
                   </div>
                 </div>
                 <div class="module-content">
-                  <div class="coming-soon-content">
-                    <div class="coming-soon-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                    </div>
-                    <h4>Coming Soon</h4>
-                    <p>Interview scheduling system coming in next release</p>
-                  </div>
+                  <InterviewList 
+                    ref="interviewListRef"
+                    @add-interview="handleAddInterview"
+                    @edit-interview="handleEditInterview" 
+                  />
                 </div>
               </div>
 
@@ -201,29 +187,19 @@
                     <h3 class="module-title">Job Offers</h3>
                     <p class="module-description">Create and manage employment offers</p>
                   </div>
-                  <div class="module-actions">
-                    <button class="action-btn primary">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                      </svg>
-                      Create Offer
-                    </button>
+                  <div class="module-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ offerStats.total }}</span>
+                      <span class="stat-text">Total</span>
+                    </div>
                   </div>
                 </div>
                 <div class="module-content">
-                  <div class="coming-soon-content">
-                    <div class="coming-soon-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14,2 14,8 20,8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10,9 9,9 8,9"></polyline>
-                      </svg>
-                    </div>
-                    <h4>Coming Soon</h4>
-                    <p>Job offer management system will be available soon</p>
-                  </div>
+                  <OfferList 
+                    ref="offerListRef"
+                    @add-offer="handleAddOffer"
+                    @edit-offer="handleEditOffer" 
+                  />
                 </div>
               </div>
 
@@ -276,6 +252,30 @@
       @close="closeModal"
     />
 
+    <!-- Add/Edit Candidate Modal -->
+    <AddCandidate 
+      :is-visible="showCandidateModal"
+      :candidate="editingCandidate"
+      @success="handleCandidateFormSuccess"
+      @close="closeCandidateModal"
+    />
+
+    <!-- Add/Edit Interview Modal -->
+    <AddInterview 
+      :is-visible="showInterviewModal"
+      :interview="editingInterview"
+      @success="handleInterviewFormSuccess"
+      @close="closeInterviewModal"
+    />
+
+    <!-- Add/Edit Offer Modal -->
+    <AddOffer 
+      :is-visible="showOfferModal"
+      :offer="editingOffer"
+      @success="handleOfferFormSuccess"
+      @close="closeOfferModal"
+    />
+
     <!-- Add/Edit Job Requisition Modal -->
     <AddJobRequisition 
       v-if="showJobRequisitionModal"
@@ -294,6 +294,12 @@ import NavbarComponent from '@/components/NavbarComponent.vue'
 import FooterComponent from '@/components/FooterComponent.vue'
 import EmployeeList from '../components/Employee/EmployeeList.vue'
 import AddEmployee from '../components/Employee/AddEmployee.vue'
+import CandidateList from '../components/Candidate/CandidateList.vue'
+import AddCandidate from '../components/Candidate/AddCandidate.vue'
+import InterviewList from '../components/Interview/InterviewList.vue'
+import AddInterview from '../components/Interview/AddInterview.vue'
+import OfferList from '../components/Offer/OfferList.vue'
+import AddOffer from '../components/Offer/AddOffer.vue'
 import JobRequisitionList from '../components/JobRequisition/JobRequisitionList.vue'
 import AddJobRequisition from '../components/JobRequisition/AddJobRequisition.vue'
 import { HRApiService } from '../services/hrApiService'
@@ -306,6 +312,12 @@ export default {
     FooterComponent,
     EmployeeList,
     AddEmployee,
+    CandidateList,
+    AddCandidate,
+    InterviewList,
+    AddInterview,
+    OfferList,
+    AddOffer,
     JobRequisitionList,
     AddJobRequisition
   },
@@ -322,15 +334,42 @@ export default {
       active: 0,
       inactive: 0
     })
+    const candidateStats = ref({
+      total: 0,
+      active: 0,
+      inactive: 0
+    })
+
+    const interviewStats = ref({
+      total: 0,
+      scheduled: 0,
+      completed: 0
+    })
+
+    const offerStats = ref({
+      total: 0,
+      accepted: 0,
+      pending: 0
+    })
     
     // Modal state
     const showModal = ref(false)
     const editingEmployee = ref(null)
+    const showCandidateModal = ref(false)
+    const editingCandidate = ref(null)
+
+    const showInterviewModal = ref(false)
+    const editingInterview = ref(null)
+    const showOfferModal = ref(false)
+    const editingOffer = ref(null)
     const showJobRequisitionModal = ref(false)
     const editingJobRequisition = ref(null)
     
     // Component refs
     const employeeListRef = ref(null)
+    const candidateListRef = ref(null)
+    const interviewListRef = ref(null)
+    const offerListRef = ref(null)
     const jobRequisitionListRef = ref(null)
 
     // Methods
@@ -370,6 +409,54 @@ export default {
       }
     }
 
+    const fetchCandidateStats = async () => {
+      try {
+        const result = await HRApiService.getCandidates()
+        if (result.success) {
+          const candidates = result.data.items || result.data.results || result.data || []
+          candidateStats.value = {
+            total: candidates.length,
+            active: candidates.filter(c => c.status && c.status.toLowerCase() !== 'rejected').length,
+            inactive: candidates.filter(c => c.status && c.status.toLowerCase() === 'rejected').length
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching candidate stats:', error)
+      }
+    }
+
+    const fetchInterviewStats = async () => {
+      try {
+        const result = await HRApiService.getInterviews()
+        if (result.success) {
+          const interviews = result.data.items || result.data.results || result.data || []
+          interviewStats.value = {
+            total: interviews.length,
+            scheduled: interviews.filter(i => i.status?.toLowerCase() === 'scheduled').length || 0,
+            completed: interviews.filter(i => i.status?.toLowerCase() === 'completed').length || 0
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching interview stats:', error)
+      }
+    }
+
+    const fetchOfferStats = async () => {
+      try {
+        const result = await HRApiService.getOffers()
+        if (result.success) {
+          const offers = result.data || []
+          offerStats.value = {
+            total: offers.length,
+            accepted: offers.filter(o => o.offer_status?.toLowerCase() === 'accepted').length || 0,
+            pending: offers.filter(o => o.offer_status?.toLowerCase() === 'offered').length || 0
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching offer stats:', error)
+      }
+    }
+
     // Employee modal handlers
     const handleAddEmployee = () => {
       editingEmployee.value = null
@@ -393,6 +480,84 @@ export default {
       // Refresh employee list to show new employee without page refresh
       if (employeeListRef.value && employeeListRef.value.fetchEmployees) {
         employeeListRef.value.fetchEmployees()
+      }
+    }
+
+    // Candidate modal handlers
+    const handleAddCandidate = () => {
+      editingCandidate.value = null
+      showCandidateModal.value = true
+    }
+
+    const handleEditCandidate = (candidate) => {
+      editingCandidate.value = candidate
+      showCandidateModal.value = true
+    }
+
+    const closeCandidateModal = () => {
+      showCandidateModal.value = false
+      editingCandidate.value = null
+    }
+
+    const handleCandidateFormSuccess = () => {
+      closeCandidateModal()
+      // Refresh stats after adding/editing candidate
+      fetchCandidateStats()
+      // Refresh candidate list to show new candidate without page refresh
+      if (candidateListRef.value && candidateListRef.value.fetchCandidates) {
+        candidateListRef.value.fetchCandidates()
+      }
+    }
+
+    // Interview modal handlers
+    const handleAddInterview = () => {
+      editingInterview.value = null
+      showInterviewModal.value = true
+    }
+
+    const handleEditInterview = (interview) => {
+      editingInterview.value = interview
+      showInterviewModal.value = true
+    }
+
+    const closeInterviewModal = () => {
+      showInterviewModal.value = false
+      editingInterview.value = null
+    }
+
+    const handleInterviewFormSuccess = () => {
+      closeInterviewModal()
+      // Refresh stats after adding/editing interview
+      fetchInterviewStats()
+      // Refresh interview list to show new interview without page refresh
+      if (interviewListRef.value && interviewListRef.value.fetchInterviews) {
+        interviewListRef.value.fetchInterviews()
+      }
+    }
+
+    // Offer modal handlers
+    const handleAddOffer = () => {
+      editingOffer.value = null
+      showOfferModal.value = true
+    }
+
+    const handleEditOffer = (offer) => {
+      editingOffer.value = offer
+      showOfferModal.value = true
+    }
+
+    const closeOfferModal = () => {
+      showOfferModal.value = false
+      editingOffer.value = null
+    }
+
+    const handleOfferFormSuccess = () => {
+      closeOfferModal()
+      // Refresh stats after adding/editing offer
+      fetchOfferStats()
+      // Refresh offer list to show new offer without page refresh
+      if (offerListRef.value && offerListRef.value.fetchOffers) {
+        offerListRef.value.fetchOffers()
       }
     }
 
@@ -426,6 +591,9 @@ export default {
     onMounted(() => {
       fetchEmployeeStats()
       fetchJobRequisitionStats()
+      fetchCandidateStats()
+      fetchInterviewStats()
+      fetchOfferStats()
     })
 
     // Computed properties
@@ -435,20 +603,47 @@ export default {
       sidebarCollapsed,
       employeeStats,
       jobRequisitionStats,
+      candidateStats,
+      interviewStats,
+      offerStats,
       showModal,
       editingEmployee,
+      showCandidateModal,
+      editingCandidate,
+      showInterviewModal,
+      editingInterview,
+      showOfferModal,
+      editingOffer,
       showJobRequisitionModal,
       editingJobRequisition,
       isEditingJobRequisition,
       employeeListRef,
+      candidateListRef,
+      interviewListRef,
+      offerListRef,
       jobRequisitionListRef,
       handleSidebarToggle,
       fetchEmployeeStats,
       fetchJobRequisitionStats,
+      fetchCandidateStats,
+      fetchInterviewStats,
+      fetchOfferStats,
       handleAddEmployee,
       handleEditEmployee,
       closeModal,
       handleFormSuccess,
+      handleAddCandidate,
+      handleEditCandidate,
+      closeCandidateModal,
+      handleCandidateFormSuccess,
+      handleAddInterview,
+      handleEditInterview,
+      closeInterviewModal,
+      handleInterviewFormSuccess,
+      handleAddOffer,
+      handleEditOffer,
+      closeOfferModal,
+      handleOfferFormSuccess,
       handleAddJobRequisition,
       handleEditJobRequisition,
       closeJobRequisitionModal,
