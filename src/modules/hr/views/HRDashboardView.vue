@@ -177,6 +177,33 @@
 
               <!-- Third Row -->
               <div class="module-card">
+                <div class="module-header">
+                  <div class="module-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="module-info">
+                    <h3 class="module-title">Job Offers</h3>
+                    <p class="module-description">Create and manage employment offers</p>
+                  </div>
+                  <div class="module-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ offerStats.total }}</span>
+                      <span class="stat-text">Total</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="module-content">
+                  <OfferList 
+                    ref="offerListRef"
+                    @add-offer="handleAddOffer"
+                    @edit-offer="handleEditOffer" 
+                  />
+                </div>
+              </div>
+
+              <div class="module-card">
                 <AttendanceWidget 
                   @add-attendance="handleAddAttendance"
                   @edit-attendance="handleEditAttendance"
@@ -306,6 +333,7 @@ export default {
     AddCandidate,
     InterviewList,
     AddInterview,
+    // eslint-disable-next-line vue/no-unused-components
     OfferList,
     AddOffer,
     JobRequisitionList,

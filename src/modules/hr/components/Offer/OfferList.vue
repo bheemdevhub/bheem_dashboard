@@ -23,7 +23,7 @@
             class="search-input"
           />
         </div>
-        <button @click="showModal = true" class="add-btn" title="Create New Offer">
+        <button @click="handleAddOffer" class="add-btn" title="Create New Offer">
           <svg viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
           </svg>
@@ -61,7 +61,7 @@
         <h4>No Offers Found</h4>
         <p v-if="searchText">No offers match your search criteria.</p>
         <p v-else>Start by creating your first job offer to manage hiring process.</p>
-        <button @click="showModal = true" class="add-first-btn">
+        <button @click="handleAddOffer" class="add-first-btn">
           <svg viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
           </svg>
@@ -155,14 +155,6 @@
       @refresh="fetchOffers"
       class="interview-content"
     />
-
-    <!-- Create/Edit Modal -->
-    <AddOffer 
-      :isVisible="showModal"
-      :offer="editingOffer"
-      @close="closeModal"
-      @success="handleOfferSuccess"
-    />
   </div>
 </template>
 
@@ -171,15 +163,14 @@ import { ref, computed, onMounted } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import { useToast } from 'vue-toastification'
 import OfferContent from './OfferContent.vue'
-import AddOffer from './AddOffer.vue'
 
 export default {
   name: 'OfferList',
+  emits: ['add-offer', 'edit-offer'],
   components: {
-    OfferContent,
-    AddOffer
+    OfferContent
   },
-  setup() {
+  setup(props, { emit }) {
     const toast = useToast()
     
     // State
@@ -189,7 +180,6 @@ export default {
     const loading = ref(false)
     const error = ref(null)
     const searchText = ref('')
-    const showModal = ref(false)
     const selectedOffer = ref(null)
     const editingOffer = ref(null)
 
@@ -271,9 +261,12 @@ export default {
       selectedOffer.value = selectedOffer.value?.id === offer.id ? null : offer
     }
 
+    const handleAddOffer = () => {
+      emit('add-offer')
+    }
+
     const editOffer = (offer) => {
-      editingOffer.value = offer
-      showModal.value = true
+      emit('edit-offer', offer)
     }
 
     const deleteOffer = async (offer) => {
@@ -304,12 +297,6 @@ export default {
 
     const handleOfferSuccess = async () => {
       await fetchOffers()
-      closeModal()
-    }
-
-    const closeModal = () => {
-      showModal.value = false
-      editingOffer.value = null
     }
 
     // Helper methods
@@ -400,17 +387,16 @@ export default {
       loading,
       error,
       searchText,
-      showModal,
       selectedOffer,
       editingOffer,
       totalCount,
       filteredOffers,
       fetchOffers,
       selectOffer,
+      handleAddOffer,
       editOffer,
       deleteOffer,
       handleOfferSuccess,
-      closeModal,
       getCandidateName,
       getCandidateEmail,
       getCandidateInitials,
