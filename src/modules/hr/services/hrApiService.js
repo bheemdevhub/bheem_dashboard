@@ -4,6 +4,32 @@ import { getAuthHeaders } from '@/config/api'
 const BASE_URL = 'https://erpbackend.bheem.cloud'
 
 export class HRApiService {
+  // Test connectivity method
+  static async testConnection() {
+    try {
+      console.log('Testing connection to:', BASE_URL)
+      const response = await fetch(`${BASE_URL}/api/hr/employees/`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      })
+      
+      console.log('Test connection response status:', response.status)
+      console.log('Test connection response ok:', response.ok)
+      
+      return {
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      }
+    } catch (error) {
+      console.error('Connection test failed:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
   // Employee endpoints
   static async getEmployees() {
     try {
@@ -983,6 +1009,124 @@ export class HRApiService {
         success: false,
         error: error.message,
         data: { items: [], total_count: 0 } // Return empty data for now
+      }
+    }
+  }
+
+  // Attendance endpoints
+  static async getEmployeeAttendance(employeeId) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/attendance/attendance/by-employee/${employeeId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      return {
+        success: true,
+        data: data
+      }
+    } catch (error) {
+      console.error('Error fetching employee attendance:', error)
+      return {
+        success: false,
+        error: error.message,
+        data: []
+      }
+    }
+  }
+
+  static async createAttendanceRecord(attendanceData) {
+    try {
+      const url = `${BASE_URL}/api/hr/attendance/attendance/`
+      console.log('Creating attendance record at URL:', url)
+      console.log('Attendance data:', attendanceData)
+      console.log('Headers:', getAuthHeaders())
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(attendanceData)
+      })
+      
+      console.log('Response status:', response.status)
+      console.log('Response ok:', response.ok)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.log('Error response text:', errorText)
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      return {
+        success: true,
+        data: data
+      }
+    } catch (error) {
+      console.error('Error creating attendance record:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+      return {
+        success: false,
+        error: error.message || 'Failed to create attendance record'
+      }
+    }
+  }
+
+  static async updateAttendanceRecord(attendanceId, attendanceData) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/attendance/${attendanceId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(attendanceData)
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      return {
+        success: true,
+        data: data
+      }
+    } catch (error) {
+      console.error('Error updating attendance record:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
+  static async deleteAttendanceRecord(attendanceId) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/attendance/${attendanceId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      return {
+        success: true,
+        message: 'Attendance record deleted successfully'
+      }
+    } catch (error) {
+      console.error('Error deleting attendance record:', error)
+      return {
+        success: false,
+        error: error.message
       }
     }
   }

@@ -21,42 +21,42 @@
       <main class="dashboard-main">
         <div class="container">
           <!-- Welcome Section -->
-          <section class="welcome-section">
+          <section class="welcome-section" :class="{ 'content-loaded': contentLoaded }">
             <div class="welcome-content">
-              <h1 class="welcome-title">Welcome back, {{ authStore.getUserName }}!</h1>
+              <h1 class="welcome-title animated-text">Welcome back, {{ authStore.getUserName }}!</h1>
               <p class="welcome-subtitle">Here's what's happening with your projects today.</p>
             </div>
             <div class="welcome-stats">
-              <div class="stat-item">
+              <div class="stat-item" :class="{ 'stat-loaded': contentLoaded }">
                 <div class="stat-icon success">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-number" ref="projectsCounter">{{ animatedProjects }}</span>
+                  <span class="stat-number counter-animation">{{ Math.round(animatedProjects) }}</span>
                   <span class="stat-label">Projects</span>
                 </div>
               </div>
-              <div class="stat-item">
+              <div class="stat-item" :class="{ 'stat-loaded': contentLoaded }">
                 <div class="stat-icon warning">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-number">{{ animatedPending }}</span>
+                  <span class="stat-number counter-animation">{{ Math.round(animatedPending) }}</span>
                   <span class="stat-label">Pending</span>
                 </div>
               </div>
-              <div class="stat-item">
+              <div class="stat-item" :class="{ 'stat-loaded': contentLoaded }">
                 <div class="stat-icon info">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                   </svg>
                 </div>
                 <div class="stat-info">
-                  <span class="stat-number">{{ animatedPerformance }}%</span>
+                  <span class="stat-number counter-animation">{{ Math.round(animatedPerformance) }}%</span>
                   <span class="stat-label">Performance</span>
                 </div>
               </div>
@@ -64,9 +64,9 @@
           </section>
 
           <!-- Stats Cards -->
-          <section class="stats-section">
+          <section class="stats-section" :class="{ 'content-loaded': contentLoaded }">
             <div class="stats-grid">
-              <div class="stat-card">
+              <div class="stat-card" :class="{ 'card-loaded': contentLoaded }">
                 <div class="stat-card-header">
                   <h3 class="stat-card-title">Total Revenue</h3>
                   <div class="stat-card-icon revenue">
@@ -86,7 +86,7 @@
                 </div>
               </div>
 
-              <div class="stat-card">
+              <div class="stat-card" :class="{ 'card-loaded': contentLoaded }">
                 <div class="stat-card-header">
                   <h3 class="stat-card-title">Active Users</h3>
                   <div class="stat-card-icon users">
@@ -414,40 +414,111 @@ export default {
     const isLoading = ref(false)
     const notifications = ref([])
     
-    // Dashboard loading state
-    // eslint-disable-next-line no-unused-vars
+    // Enhanced loading states with better control
     const showDashboardLoader = ref(true)
     const dashboardLoadingSuccess = ref(false)
+    const contentLoaded = ref(false)
+    const animationsStarted = ref(false)
     
-    // Animated counters
+    // Smooth animated counters
     const animatedProjects = ref(0)
     const animatedPending = ref(0)
     const animatedPerformance = ref(0)
+    
+    // Target values for consistency
+    const targetValues = {
+      projects: 24,
+      pending: 8,
+      performance: 94
+    }
+    
+    // Animation frame IDs for cleanup
+    let animationFrames = []
 
-    // Initialize animated counters
-    const initializeCounters = () => {
-      // Animate project counter to 24
-      animateCounter(animatedProjects, 24, 1500)
-      
-      // Animate pending tasks to 8
-      setTimeout(() => {
-        animateCounter(animatedPending, 8, 1200)
-      }, 500)
-      
-      // Animate performance to 94%
-      setTimeout(() => {
-        animateCounter(animatedPerformance, 94, 1800)
-      }, 1000)
+    // Enhanced smooth animation function
+    const smoothAnimate = (target, finalValue, duration = 2000, delay = 0, easing = 'easeOutCubic') => {
+      return new Promise((resolve) => {
+        // Clear any existing animation for this target
+        if (target._animationId) {
+          cancelAnimationFrame(target._animationId)
+        }
+        
+        setTimeout(() => {
+          const startValue = target.value
+          const startTime = performance.now()
+          
+          const easingFunctions = {
+            linear: (t) => t,
+            easeOutCubic: (t) => 1 - Math.pow(1 - t, 3),
+            easeInOutCubic: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+            easeOutQuart: (t) => 1 - Math.pow(1 - t, 4)
+          }
+          
+          const easingFunc = easingFunctions[easing] || easingFunctions.easeOutCubic
+          
+          const animate = (currentTime) => {
+            const elapsed = currentTime - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            const easedProgress = easingFunc(progress)
+            
+            target.value = startValue + (finalValue - startValue) * easedProgress
+            
+            if (progress < 1) {
+              target._animationId = requestAnimationFrame(animate)
+              animationFrames.push(target._animationId)
+            } else {
+              target.value = finalValue
+              target._animationId = null
+              resolve()
+            }
+          }
+          
+          target._animationId = requestAnimationFrame(animate)
+          animationFrames.push(target._animationId)
+        }, delay)
+      })
     }
 
-    // Handle dashboard loader completion
-    const onDashboardLoaderHidden = () => {
+    // Reset all counters to zero
+    const resetCounters = () => {
+      animatedProjects.value = 0
+      animatedPending.value = 0
+      animatedPerformance.value = 0
+    }
+
+    // Initialize counters with smooth staggered animation
+    const initializeCounters = async () => {
+      if (animationsStarted.value) return
+      
+      animationsStarted.value = true
+      resetCounters()
+      
+      // Staggered animations for smooth effect
+      await Promise.all([
+        smoothAnimate(animatedProjects, targetValues.projects, 1800, 0, 'easeOutCubic'),
+        smoothAnimate(animatedPending, targetValues.pending, 1500, 300, 'easeOutCubic'),
+        smoothAnimate(animatedPerformance, targetValues.performance, 2000, 600, 'easeOutCubic')
+      ])
+    }
+
+    // Enhanced dashboard loader completion
+    const onDashboardLoaderHidden = async () => {
       showDashboardLoader.value = false
-      // Initialize counters after loader is hidden
+      
+      // Reset counters before starting animations
+      resetCounters()
+      
+      // Staggered content loading for smooth experience
       setTimeout(() => {
-        initializeCounters()
-        showNotification('success', 'Welcome!', 'Dashboard loaded successfully')
-      }, 300)
+        contentLoaded.value = true
+      }, 100)
+      
+      setTimeout(async () => {
+        if (!animationsStarted.value) {
+          await initializeCounters()
+          showNotification('success', 'Welcome!', 'Dashboard loaded successfully')
+        }
+      }, 400)
     }
 
     const handleSidebarToggle = (collapsed) => {
@@ -455,7 +526,6 @@ export default {
     }
 
     const updateSalesChart = () => {
-      // Chart will automatically update via reactive prop
       console.log('Sales chart updated for period:', selectedPeriod.value)
     }
 
@@ -464,15 +534,10 @@ export default {
     }
 
     const scrollToTop = () => {
-      // Smooth and slow scroll to top
-      const scrollStep = -window.scrollY / (1500 / 15) // Slower scroll duration
-      const scrollInterval = setInterval(() => {
-        if (window.scrollY !== 0) {
-          window.scrollBy(0, scrollStep)
-        } else {
-          clearInterval(scrollInterval)
-        }
-      }, 15)
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
     }
 
     // Floating Action Menu
@@ -495,12 +560,11 @@ export default {
       showFloatingMenu.value = false
     }
 
-    // Notification System
+    // Enhanced notification system
     const showNotification = (type, title, message) => {
       const id = Date.now()
       notifications.value.push({ id, type, title, message })
       
-      // Auto remove after 5 seconds
       setTimeout(() => {
         removeNotification(id)
       }, 5000)
@@ -513,33 +577,58 @@ export default {
       }
     }
 
-    // Animated Counter Function
-    const animateCounter = (target, finalValue, duration = 2000) => {
-      const startValue = target.value
-      const increment = (finalValue - startValue) / (duration / 16)
-      
-      const timer = setInterval(() => {
-        target.value += increment
-        if (target.value >= finalValue) {
-          target.value = finalValue
-          clearInterval(timer)
+    // Handle page visibility change to prevent animation issues on refresh
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !showDashboardLoader.value) {
+        // Reset animations if page becomes visible again
+        if (animationsStarted.value) {
+          animationsStarted.value = false
+          resetCounters()
+          
+          // Restart animations with a small delay
+          setTimeout(async () => {
+            if (!animationsStarted.value) {
+              await initializeCounters()
+            }
+          }, 200)
         }
-      }, 16)
+      }
     }
 
-    // Simulate loading on mount
+    // Cleanup function for animations
+    const cleanupAnimations = () => {
+      animationFrames.forEach(id => {
+        if (id) cancelAnimationFrame(id)
+      })
+      animationFrames = []
+      
+      // Clear animation IDs from targets
+      const targets = [animatedProjects, animatedPending, animatedPerformance]
+      targets.forEach(target => {
+        if (target._animationId) {
+          cancelAnimationFrame(target._animationId)
+          target._animationId = null
+        }
+      })
+    }
+
     onMounted(() => {
       window.addEventListener('scroll', handleScroll)
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+      
+      // Reset counters on mount
+      resetCounters()
       
       // Start the dashboard loading simulation
       setTimeout(() => {
         dashboardLoadingSuccess.value = true
-        // The loader will hide itself after showing success animation
-      }, 3500) // Show loader for 3.5 seconds before success
+      }, 2500)
     })
 
     onUnmounted(() => {
       window.removeEventListener('scroll', handleScroll)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      cleanupAnimations()
     })
 
     return {
@@ -552,6 +641,7 @@ export default {
       notifications,
       showDashboardLoader,
       dashboardLoadingSuccess,
+      contentLoaded,
       animatedProjects,
       animatedPending,
       animatedPerformance,
@@ -593,42 +683,27 @@ export default {
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Ultra-wide screen optimization */
-@media (min-width: 1920px) {
-  .container {
-    max-width: 2000px;
-    padding: 0 3rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 3rem;
-  }
-  
-  .charts-grid {
-    grid-template-columns: 3fr 1fr;
-    gap: 3rem;
-  }
-  
-  .actions-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 3rem;
-  }
-  
-  .welcome-section {
-    padding: 4rem;
-    margin-bottom: 3.5rem;
-  }
-  
-  .dashboard-main {
-    padding: 3rem 0;
-  }
-}
-
+/* Enhanced Dashboard Layout */
 .dashboard-layout {
   min-height: 100vh;
   display: flex;
-  background-color: var(--bg-secondary);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #f1f5f9 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.dashboard-layout::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .main-content {
@@ -637,7 +712,9 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  transition: margin-left 0.3s ease-in-out;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
 }
 
 .content-collapsed {
@@ -646,7 +723,7 @@ export default {
 
 .dashboard-main {
   flex: 1;
-  padding: 2.5rem 0;
+  padding: 2rem 0;
 }
 
 .container {
@@ -655,7 +732,7 @@ export default {
   padding: 0 2.5rem;
 }
 
-/* Welcome Section */
+/* Enhanced Welcome Section */
 .welcome-section {
   display: flex;
   justify-content: space-between;
@@ -667,7 +744,17 @@ export default {
   color: white;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+  box-shadow: 
+    0 25px 50px rgba(102, 126, 234, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcome-section.content-loaded {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .welcome-section::before {
@@ -678,20 +765,43 @@ export default {
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 25% 75%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 75% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  animation: float 6s ease-in-out infinite;
   pointer-events: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(0.5deg); }
+  66% { transform: translateY(5px) rotate(-0.3deg); }
 }
 
 .welcome-content h1 {
   font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
-  background: linear-gradient(45deg, #ffffff, #f0f9ff);
+  background: linear-gradient(45deg, #ffffff, #f0f9ff, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  line-height: 1.1;
+}
+
+.animated-text {
+  animation: textSlideIn 1s ease-out forwards;
+}
+
+@keyframes textSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .welcome-subtitle {
@@ -699,6 +809,7 @@ export default {
   font-size: 1.25rem;
   font-weight: 300;
   letter-spacing: 0.5px;
+  line-height: 1.6;
 }
 
 .welcome-stats {
@@ -714,16 +825,28 @@ export default {
   gap: 1rem;
   background: rgba(255, 255, 255, 0.15);
   padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(30px) scale(0.9);
+  opacity: 0;
+  min-width: 160px;
 }
 
+.stat-item.stat-loaded {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.stat-item:nth-child(1) { transition-delay: 0.2s; }
+.stat-item:nth-child(2) { transition-delay: 0.4s; }
+.stat-item:nth-child(3) { transition-delay: 0.6s; }
+
 .stat-item:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-8px) scale(1.05);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .stat-icon {
@@ -734,27 +857,62 @@ export default {
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-.stat-icon.success { background: var(--success-color); }
-.stat-icon.warning { background: var(--warning-color); }
-.stat-icon.info { background: var(--primary-color); }
+.stat-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.stat-item:hover .stat-icon::before {
+  transform: translateX(100%);
+}
+
+.stat-icon.success { 
+  background: linear-gradient(135deg, var(--success-color), #059669);
+}
+.stat-icon.warning { 
+  background: linear-gradient(135deg, var(--warning-color), #d97706);
+}
+.stat-icon.info { 
+  background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+}
 
 .stat-icon svg {
   width: 1.5rem;
   height: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
 .stat-number {
   font-size: 1.75rem;
   font-weight: 800;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-animation {
+  transition: all 0.3s ease;
+  transform-origin: center;
 }
 
 .stat-label {
@@ -762,29 +920,53 @@ export default {
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-/* Stats Cards */
+/* Enhanced Stats Section */
 .stats-section {
   margin-bottom: 3rem;
+  transform: translateY(30px);
+  opacity: 0;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-section.content-loaded {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2.5rem;
+  align-items: start;
 }
 
 .stat-card {
   background: var(--bg-primary);
   border-radius: var(--radius-xl);
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(229, 231, 235, 0.8);
-  transition: all 0.3s ease;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(229, 231, 235, 0.6);
+  border: 1px solid rgba(229, 231, 235, 0.6);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  transform: translateY(40px) scale(0.95);
+  opacity: 0;
 }
+
+.stat-card.card-loaded {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.stat-card:nth-child(1) { transition-delay: 0.1s; }
+.stat-card:nth-child(2) { transition-delay: 0.2s; }
+.stat-card:nth-child(3) { transition-delay: 0.3s; }
+.stat-card:nth-child(4) { transition-delay: 0.4s; }
 
 .stat-card::before {
   content: '';
@@ -793,13 +975,19 @@ export default {
   left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  border-color: var(--primary-color);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 0 0 1px var(--primary-color);
+}
+
+.stat-card:hover::before {
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
 }
 
 .stat-card-header {
@@ -1180,11 +1368,16 @@ export default {
   font-weight: 400;
 }
 
-/* Responsive Design */
+/* Responsive Design with Enhanced Alignment */
 @media (max-width: 1400px) {
   .container {
     max-width: 1200px;
     padding: 0 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
   }
 }
 
@@ -1196,6 +1389,18 @@ export default {
   .container {
     max-width: 100%;
     padding: 0 1.5rem;
+  }
+  
+  .welcome-section {
+    flex-direction: column;
+    gap: 2rem;
+    text-align: center;
+    padding: 2.5rem;
+  }
+  
+  .welcome-stats {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 
@@ -1213,25 +1418,29 @@ export default {
   }
 
   .welcome-section {
-    flex-direction: column;
-    gap: 2rem;
-    text-align: center;
     padding: 2rem;
-  }
-
-  .welcome-stats {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .stats-grid,
-  .actions-grid {
-    grid-template-columns: 1fr;
+    margin-bottom: 2rem;
   }
 
   .welcome-content h1 {
     font-size: 2rem;
+  }
+
+  .welcome-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    min-width: auto;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 
   .stat-value {
@@ -1248,20 +1457,139 @@ export default {
     padding: 1.5rem;
   }
 
+  .welcome-content h1 {
+    font-size: 1.75rem;
+  }
+
   .stat-item {
     flex-direction: column;
     text-align: center;
-    gap: 0.5rem;
-    padding: 1rem;
+    gap: 0.75rem;
+    padding: 1.25rem;
   }
 
-  .welcome-stats {
-    gap: 1rem;
-    flex-direction: column;
+  .stat-card {
+    padding: 1.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.875rem;
+  }
+}
+
+/* Enhanced Loading States and Smooth Animations */
+.content-loaded {
+  animation: sectionSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes sectionSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-loaded {
+  animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.stat-loaded {
+  animation: statSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes statSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Smooth Number Animations */
+.counter-animation {
+  transition: all 0.3s ease;
+  transform-origin: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-animation:hover {
+  transform: scale(1.05);
+}
+
+/* Performance Optimizations */
+.stat-card,
+.stat-item {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
   
-  .action-card {
-    padding: 2rem;
+  .welcome-section,
+  .stats-section,
+  .stat-card,
+  .stat-item {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Focus States for Better Accessibility */
+.stat-card:focus-within,
+.stat-item:focus-within {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Ultra-wide screen optimization */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 2000px;
+    padding: 0 3rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 3rem;
+  }
+  
+  .welcome-section {
+    padding: 4rem;
+    margin-bottom: 3.5rem;
+  }
+  
+  .dashboard-main {
+    padding: 3rem 0;
+  }
+  
+  .stat-item {
+    min-width: 180px;
   }
 }
 

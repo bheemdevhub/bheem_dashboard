@@ -217,13 +217,268 @@
               
               <div class="tab-content">
                 <div v-if="activeTab === 'attendance'" class="tab-pane">
-                  <div class="coming-soon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12,6 12,12 16,14"/>
+                  <!-- Attendance Header with Actions -->
+                  <div class="attendance-header">
+                    <div class="attendance-title-section">
+                      <h3 class="attendance-title">Attendance Records</h3>
+                      <div class="attendance-summary-badges" v-if="attendanceRecords.length > 0">
+                        <span class="summary-badge total">
+                          {{ attendanceRecords.length }} Records
+                        </span>
+                        <span class="summary-badge present">
+                          {{ presentDays }} Present
+                        </span>
+                        <span class="summary-badge rate" :class="attendanceRate >= 90 ? 'excellent' : attendanceRate >= 80 ? 'good' : 'needs-improvement'">
+                          {{ attendanceRate }}% Rate
+                        </span>
+                      </div>
+                    </div>
+                    <div class="attendance-actions">
+                      <!-- Quick Clock Actions -->
+                      <div class="clock-actions">
+                        <button 
+                          @click="quickClockIn" 
+                          class="action-btn clock-in"
+                          :disabled="loadingAttendance"
+                          title="Quick Clock In for Today"
+                        >
+                          <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                          </svg>
+                          Clock In
+                        </button>
+                        <button 
+                          @click="quickClockOut" 
+                          class="action-btn clock-out"
+                          :disabled="loadingAttendance"
+                          title="Quick Clock Out for Today"
+                        >
+                          <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                          </svg>
+                          Clock Out
+                        </button>
+                      </div>
+
+                      <!-- Standard Actions -->
+                      <button @click="refreshAttendance" class="action-btn secondary" :disabled="loadingAttendance">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                        </svg>
+                        Refresh
+                      </button>
+                      <button @click="exportAttendanceData" class="action-btn export" :disabled="attendanceRecords.length === 0">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Export
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Loading State -->
+                  <div v-if="loadingAttendance" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading attendance records...</p>
+                  </div>
+
+                  <!-- Error State -->
+                  <div v-else-if="attendanceError" class="error-state">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                     </svg>
-                    <h4>Attendance Details</h4>
-                    <p>Coming soon...</p>
+                    <p>{{ attendanceError }}</p>
+                    <button @click="fetchAttendanceRecords" class="retry-btn">Try Again</button>
+                  </div>
+
+                  <!-- Attendance Records -->
+                  <div v-else-if="attendanceRecords.length > 0" class="attendance-records">
+                    <!-- Summary Stats -->
+                    <div class="attendance-stats">
+                      <div class="stat-item">
+                        <span class="stat-label">Total Days</span>
+                        <span class="stat-value">{{ attendanceRecords.length }}</span>
+                      </div>
+                      <div class="stat-item">
+                        <span class="stat-label">Present Days</span>
+                        <span class="stat-value present">{{ presentDays }}</span>
+                      </div>
+                      <div class="stat-item">
+                        <span class="stat-label">Attendance Rate</span>
+                        <span class="stat-value">{{ attendanceRate }}%</span>
+                      </div>
+                      <div class="stat-item">
+                        <span class="stat-label">Avg Hours/Day</span>
+                        <span class="stat-value">{{ averageHoursPerDay }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Records Table -->
+                    <div class="attendance-table-container">
+                      <table class="attendance-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Hours</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr 
+                            v-for="record in paginatedAttendance" 
+                            :key="record.id"
+                            class="attendance-row"
+                          >
+                            <td class="date-cell">
+                              <div class="date-display">
+                                <span class="date">{{ formatAttendanceDate(record.date) }}</span>
+                                <span class="day">{{ getDayOfWeek(record.date) }}</span>
+                              </div>
+                            </td>
+                            <td class="time-cell">
+                              <span class="time" :class="{ 'late': isLate(record.check_in) }">
+                                {{ formatTime(record.check_in) }}
+                              </span>
+                            </td>
+                            <td class="time-cell">
+                              <span class="time">{{ formatTime(record.check_out) }}</span>
+                            </td>
+                            <td class="hours-cell">
+                              <span class="hours">{{ calculateHours(record.check_in, record.check_out) }}</span>
+                            </td>
+                            <td class="status-cell">
+                              <span :class="['status-badge', record.status.toLowerCase()]">
+                                {{ record.status }}
+                              </span>
+                            </td>
+                            <td class="actions-cell">
+                              <button 
+                                @click="editAttendanceRecord(record)" 
+                                class="action-icon edit"
+                                title="Edit Record"
+                              >
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                              </button>
+                              <button 
+                                @click="deleteAttendanceRecord(record)" 
+                                class="action-icon delete"
+                                title="Delete Record"
+                              >
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd" />
+                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v6a1 1 0 11-2 0V7zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V7a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div v-if="totalAttendancePages > 1" class="attendance-pagination">
+                      <button 
+                        @click="currentAttendancePage--" 
+                        :disabled="currentAttendancePage === 1"
+                        class="pagination-btn"
+                      >
+                        Previous
+                      </button>
+                      <span class="pagination-info">
+                        Page {{ currentAttendancePage }} of {{ totalAttendancePages }}
+                      </span>
+                      <button 
+                        @click="currentAttendancePage++" 
+                        :disabled="currentAttendancePage === totalAttendancePages"
+                        class="pagination-btn"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Empty State -->
+                  <div v-else class="attendance-empty-state">
+                    <div class="empty-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
+                      </svg>
+                    </div>
+                    <h4>No Attendance Records</h4>
+                    <p>No attendance records found for {{ getFullName(employee) }}. Get started by adding a record or using quick clock actions.</p>
+                    <div class="empty-actions">
+                      <button @click="quickClockIn" class="action-btn clock-in">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                        Clock In Now
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Add/Edit Attendance Modal -->
+                  <div v-if="showAddAttendanceModal" class="modal-overlay" @click="closeAttendanceModal">
+                    <div class="modal-content" @click.stop>
+                      <div class="modal-header">
+                        <h3>{{ editingAttendance ? 'Edit' : 'Add' }} Attendance Record</h3>
+                        <button @click="closeAttendanceModal" class="close-btn">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="form-group">
+                          <label>Date</label>
+                          <input 
+                            v-model="attendanceForm.date" 
+                            type="date" 
+                            class="form-input"
+                            :max="today"
+                          />
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label>Check In</label>
+                            <input 
+                              v-model="attendanceForm.check_in" 
+                              type="time" 
+                              class="form-input"
+                            />
+                          </div>
+                          <div class="form-group">
+                            <label>Check Out</label>
+                            <input 
+                              v-model="attendanceForm.check_out" 
+                              type="time" 
+                              class="form-input"
+                            />
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label>Status</label>
+                          <select v-model="attendanceForm.status" class="form-input">
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Late">Late</option>
+                            <option value="Half Day">Half Day</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button @click="closeAttendanceModal" class="btn secondary">Cancel</button>
+                        <button @click="saveAttendanceRecord" class="btn primary" :disabled="savingAttendance">
+                          {{ savingAttendance ? 'Saving...' : 'Save' }}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -299,9 +554,10 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, computed, watch } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'EmployeeContent',
@@ -345,6 +601,26 @@ export default {
       status: false
     })
     
+    // Attendance-related reactive data
+    const attendanceRecords = ref([])
+    const loadingAttendance = ref(false)
+    const attendanceError = ref(null)
+    const showAddAttendanceModal = ref(false)
+    const editingAttendance = ref(null)
+    const savingAttendance = ref(false)
+    const currentAttendancePage = ref(1)
+    const attendancePageSize = ref(10)
+    
+    const attendanceForm = reactive({
+      date: '',
+      check_in: '',
+      check_out: '',
+      status: 'Present'
+    })
+    
+    // Get today's date for max date constraint
+    const today = new Date().toISOString().split('T')[0]
+    
     // Tab configuration
     const tabs = [
       {
@@ -368,6 +644,35 @@ export default {
         icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
       }
     ]
+    
+    // Computed properties for attendance
+    const presentDays = computed(() => {
+      return attendanceRecords.value.filter(record => record.status === 'Present').length
+    })
+    
+    const attendanceRate = computed(() => {
+      if (attendanceRecords.value.length === 0) return 0
+      return Math.round((presentDays.value / attendanceRecords.value.length) * 100)
+    })
+    
+    const averageHoursPerDay = computed(() => {
+      if (attendanceRecords.value.length === 0) return '0.0'
+      const totalHours = attendanceRecords.value.reduce((sum, record) => {
+        const hours = calculateHours(record.check_in, record.check_out)
+        return sum + (parseFloat(hours) || 0)
+      }, 0)
+      return (totalHours / attendanceRecords.value.length).toFixed(1)
+    })
+    
+    const totalAttendancePages = computed(() => {
+      return Math.ceil(attendanceRecords.value.length / attendancePageSize.value)
+    })
+    
+    const paginatedAttendance = computed(() => {
+      const start = (currentAttendancePage.value - 1) * attendancePageSize.value
+      const end = start + attendancePageSize.value
+      return attendanceRecords.value.slice(start, end)
+    })
     
     // Methods
     const fetchLookups = async () => {
@@ -656,9 +961,365 @@ export default {
       emit('edit', props.employee)
     }
     
+    // Attendance Methods
+    const fetchAttendanceRecords = async () => {
+      if (!props.employee?.id) return
+      
+      loadingAttendance.value = true
+      attendanceError.value = null
+      
+      try {
+        const result = await HRApiService.getEmployeeAttendance(props.employee.id)
+        if (result.success) {
+          // Sort by date descending (newest first)
+          attendanceRecords.value = result.data.sort((a, b) => new Date(b.date) - new Date(a.date))
+          
+          if (result.data.length > 0) {
+            toast.success(`Loaded ${result.data.length} attendance records`, {
+              timeout: 2000,
+              icon: '📋'
+            })
+          } else {
+            toast.info('No attendance records found for this employee', {
+              timeout: 3000,
+              icon: 'ℹ️'
+            })
+          }
+        } else {
+          attendanceError.value = result.error || 'Failed to fetch attendance records'
+          toast.error(`Failed to load attendance: ${result.error}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching attendance:', error)
+        attendanceError.value = 'An unexpected error occurred while loading attendance data'
+        toast.error('Failed to load attendance records', {
+          timeout: 5000,
+          icon: '❌'
+        })
+      } finally {
+        loadingAttendance.value = false
+      }
+    }
+    
+    const refreshAttendance = () => {
+      fetchAttendanceRecords()
+    }
+    
+    const formatAttendanceDate = (dateString) => {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      })
+    }
+    
+    const getDayOfWeek = (dateString) => {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', { weekday: 'short' })
+    }
+    
+    const formatTime = (timeString) => {
+      if (!timeString) return 'N/A'
+      const time = new Date(`1970-01-01T${timeString}`)
+      return time.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    }
+    
+    const calculateHours = (checkIn, checkOut) => {
+      if (!checkIn || !checkOut) return '0.0'
+      
+      const start = new Date(`1970-01-01T${checkIn}`)
+      const end = new Date(`1970-01-01T${checkOut}`)
+      const diffMs = end - start
+      const diffHours = diffMs / (1000 * 60 * 60)
+      
+      return diffHours > 0 ? diffHours.toFixed(1) : '0.0'
+    }
+    
+    const isLate = (checkInTime) => {
+      if (!checkInTime) return false
+      const checkIn = new Date(`1970-01-01T${checkInTime}`)
+      const standardTime = new Date(`1970-01-01T09:15:00`) // 15 minutes grace period
+      return checkIn > standardTime
+    }
+    
+    const editAttendanceRecord = (record) => {
+      editingAttendance.value = record
+      attendanceForm.date = record.date
+      attendanceForm.check_in = record.check_in
+      attendanceForm.check_out = record.check_out
+      attendanceForm.status = record.status
+      showAddAttendanceModal.value = true
+    }
+    
+    const deleteAttendanceRecord = async (record) => {
+      const result = await Swal.fire({
+        title: 'Delete Attendance Record?',
+        text: `This will permanently delete the attendance record for ${formatAttendanceDate(record.date)}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel'
+      })
+      
+      if (result.isConfirmed) {
+        try {
+          const deleteResult = await HRApiService.deleteAttendanceRecord(record.id)
+          if (deleteResult.success) {
+            toast.success('Attendance record deleted successfully!', {
+              timeout: 3000,
+              icon: '✅'
+            })
+            fetchAttendanceRecords() // Refresh the list
+          } else {
+            toast.error(`Failed to delete record: ${deleteResult.error}`, {
+              timeout: 5000,
+              icon: '❌'
+            })
+          }
+        } catch (error) {
+          console.error('Error deleting attendance record:', error)
+          toast.error('An unexpected error occurred while deleting the record', {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      }
+    }
+    
+    const closeAttendanceModal = () => {
+      showAddAttendanceModal.value = false
+      editingAttendance.value = null
+      attendanceForm.date = ''
+      attendanceForm.check_in = ''
+      attendanceForm.check_out = ''
+      attendanceForm.status = 'Present'
+    }
+    
+    const saveAttendanceRecord = async () => {
+      if (!attendanceForm.date) {
+        toast.warning('Please select a date', { timeout: 3000, icon: '⚠️' })
+        return
+      }
+      
+      savingAttendance.value = true
+      
+      try {
+        const attendanceData = {
+          employee_id: props.employee.id,
+          date: attendanceForm.date,
+          check_in: attendanceForm.check_in,
+          check_out: attendanceForm.check_out,
+          status: attendanceForm.status
+        }
+        
+        let result
+        if (editingAttendance.value) {
+          result = await HRApiService.updateAttendanceRecord(editingAttendance.value.id, attendanceData)
+        } else {
+          result = await HRApiService.createAttendanceRecord(attendanceData)
+        }
+        
+        if (result.success) {
+          const action = editingAttendance.value ? 'updated' : 'created'
+          toast.success(`Attendance record ${action} successfully!`, {
+            timeout: 3000,
+            icon: '✅'
+          })
+          closeAttendanceModal()
+          fetchAttendanceRecords() // Refresh the list
+        } else {
+          toast.error(`Failed to save record: ${result.error}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      } catch (error) {
+        console.error('Error saving attendance record:', error)
+        toast.error('An unexpected error occurred while saving the record', {
+          timeout: 5000,
+          icon: '❌'
+        })
+      } finally {
+        savingAttendance.value = false
+      }
+    }
+
+    // New attendance action methods
+    const quickClockIn = async () => {
+      const today = new Date().toISOString().split('T')[0]
+      const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5)
+      
+      // Check if there's already a record for today
+      const todayRecord = attendanceRecords.value.find(record => record.date === today)
+      if (todayRecord && todayRecord.check_in) {
+        toast.warning('Employee already clocked in today', {
+          timeout: 3000,
+          icon: '⚠️'
+        })
+        return
+      }
+      
+      try {
+        const attendanceData = {
+          employee_id: props.employee.id,
+          date: today,
+          check_in: currentTime,
+          check_out: null,
+          status: 'Present'
+        }
+        
+        const result = await HRApiService.createAttendanceRecord(attendanceData)
+        if (result.success) {
+          toast.success(`Employee clocked in at ${formatTime(currentTime)}`, {
+            timeout: 3000,
+            icon: '✅'
+          })
+          fetchAttendanceRecords()
+        } else {
+          toast.error(`Failed to clock in: ${result.error}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      } catch (error) {
+        console.error('Error clocking in:', error)
+        toast.error('Failed to clock in', {
+          timeout: 5000,
+          icon: '❌'
+        })
+      }
+    }
+
+    const quickClockOut = async () => {
+      const today = new Date().toISOString().split('T')[0]
+      const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5)
+      
+      // Find today's record
+      const todayRecord = attendanceRecords.value.find(record => record.date === today)
+      if (!todayRecord) {
+        toast.warning('No clock-in record found for today. Please clock in first.', {
+          timeout: 3000,
+          icon: '⚠️'
+        })
+        return
+      }
+      
+      if (todayRecord.check_out) {
+        toast.warning('Employee already clocked out today', {
+          timeout: 3000,
+          icon: '⚠️'
+        })
+        return
+      }
+      
+      try {
+        const attendanceData = {
+          employee_id: props.employee.id,
+          date: today,
+          check_in: todayRecord.check_in,
+          check_out: currentTime,
+          status: 'Present'
+        }
+        
+        const result = await HRApiService.updateAttendanceRecord(todayRecord.id, attendanceData)
+        if (result.success) {
+          const hoursWorked = calculateHours(todayRecord.check_in, currentTime)
+          toast.success(`Employee clocked out at ${formatTime(currentTime)} (${hoursWorked} hours worked)`, {
+            timeout: 4000,
+            icon: '✅'
+          })
+          fetchAttendanceRecords()
+        } else {
+          toast.error(`Failed to clock out: ${result.error}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      } catch (error) {
+        console.error('Error clocking out:', error)
+        toast.error('Failed to clock out', {
+          timeout: 5000,
+          icon: '❌'
+        })
+      }
+    }
+
+    const exportAttendanceData = () => {
+      if (attendanceRecords.value.length === 0) {
+        toast.warning('No attendance data to export', {
+          timeout: 3000,
+          icon: '⚠️'
+        })
+        return
+      }
+
+      try {
+        // Prepare data for export
+        const exportData = attendanceRecords.value.map(record => ({
+          'Date': formatAttendanceDate(record.date),
+          'Day': getDayOfWeek(record.date),
+          'Check In': formatTime(record.check_in),
+          'Check Out': formatTime(record.check_out),
+          'Hours': calculateHours(record.check_in, record.check_out),
+          'Status': record.status
+        }))
+
+        // Convert to CSV
+        const headers = Object.keys(exportData[0])
+        const csvContent = [
+          headers.join(','),
+          ...exportData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+        ].join('\n')
+
+        // Download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        if (link.download !== undefined) {
+          const url = URL.createObjectURL(blob)
+          link.setAttribute('href', url)
+          link.setAttribute('download', `${getFullName(props.employee)}_attendance_${new Date().toISOString().split('T')[0]}.csv`)
+          link.style.visibility = 'hidden'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+
+        toast.success('Attendance data exported successfully!', {
+          timeout: 3000,
+          icon: '📁'
+        })
+      } catch (error) {
+        console.error('Error exporting data:', error)
+        toast.error('Failed to export attendance data', {
+          timeout: 5000,
+          icon: '❌'
+        })
+      }
+    }
+    
     // Initialize
     onMounted(() => {
       fetchLookups()
+      if (props.employee?.id) {
+        fetchAttendanceRecords()
+      }
+    })
+    
+    // Watch for employee changes to refresh attendance
+    watch(() => props.employee?.id, (newId, oldId) => {
+      if (newId && newId !== oldId) {
+        fetchAttendanceRecords()
+      }
     })
     
     return {
@@ -676,6 +1337,25 @@ export default {
       editMode,
       editValues,
       saving,
+      
+      // Attendance data
+      attendanceRecords,
+      loadingAttendance,
+      attendanceError,
+      showAddAttendanceModal,
+      editingAttendance,
+      savingAttendance,
+      currentAttendancePage,
+      attendancePageSize,
+      attendanceForm,
+      today,
+      
+      // Computed properties
+      presentDays,
+      attendanceRate,
+      averageHoursPerDay,
+      totalAttendancePages,
+      paginatedAttendance,
       
       // Methods
       getFullName,
@@ -698,7 +1378,23 @@ export default {
       startEdit,
       saveEdit,
       toggleStatus,
-      handleEdit
+      handleEdit,
+      
+      // Attendance methods
+      fetchAttendanceRecords,
+      refreshAttendance,
+      formatAttendanceDate,
+      getDayOfWeek,
+      formatTime,
+      calculateHours,
+      isLate,
+      editAttendanceRecord,
+      deleteAttendanceRecord,
+      closeAttendanceModal,
+      saveAttendanceRecord,
+      quickClockIn,
+      quickClockOut,
+      exportAttendanceData
     }
   }
 }
@@ -871,6 +1567,438 @@ export default {
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+/* Enhanced Attendance Styles */
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.attendance-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.attendance-title {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.attendance-summary-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.summary-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.summary-badge.total {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.summary-badge.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.summary-badge.rate.excellent {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.summary-badge.rate.good {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.summary-badge.rate.needs-improvement {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.attendance-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.clock-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-right: 0.5rem;
+  padding-right: 0.5rem;
+  border-right: 1px solid #e2e8f0;
+}
+
+.action-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: all 0.2s ease;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.action-btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.action-btn.primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.action-btn.secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.action-btn.clock-in {
+  background: #10b981;
+  color: white;
+}
+
+.action-btn.clock-in:hover:not(:disabled) {
+  background: #059669;
+}
+
+.action-btn.clock-out {
+  background: #f59e0b;
+  color: white;
+}
+
+.action-btn.clock-out:hover:not(:disabled) {
+  background: #d97706;
+}
+
+.action-btn.export {
+  background: #8b5cf6;
+  color: white;
+}
+
+.action-btn.export:hover:not(:disabled) {
+  background: #7c3aed;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #ef4444;
+}
+
+.error-state svg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+}
+
+.retry-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.attendance-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.stat-value.present {
+  color: #059669;
+}
+
+.attendance-table-container {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.attendance-table th,
+.attendance-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.attendance-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.attendance-row:hover {
+  background: #f9fafb;
+}
+
+.date-cell {
+  min-width: 120px;
+}
+
+.date-display {
+  display: flex;
+  flex-direction: column;
+}
+
+.date {
+  font-weight: 500;
+}
+
+.day {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.time-cell {
+  min-width: 100px;
+}
+
+.time.late {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.hours-cell {
+  min-width: 80px;
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.absent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.late {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.half-day {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.actions-cell {
+  min-width: 100px;
+}
+
+.action-icon {
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.action-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.action-icon.edit {
+  color: #3b82f6;
+}
+
+.action-icon.edit:hover {
+  background: #dbeafe;
+}
+
+.action-icon.delete {
+  color: #ef4444;
+}
+
+.action-icon.delete:hover {
+  background: #fee2e2;
+}
+
+.attendance-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.attendance-empty-state .empty-icon {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  color: #9ca3af;
+}
+
+.attendance-empty-state .empty-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.attendance-empty-state h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.attendance-empty-state p {
+  margin: 0 0 1.5rem 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.attendance-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .attendance-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .attendance-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .clock-actions {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .attendance-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .action-btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
 }
 
 .switch {

@@ -177,30 +177,10 @@
 
               <!-- Third Row -->
               <div class="module-card">
-                <div class="module-header">
-                  <div class="module-icon">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                  </div>
-                  <div class="module-info">
-                    <h3 class="module-title">Job Offers</h3>
-                    <p class="module-description">Create and manage employment offers</p>
-                  </div>
-                  <div class="module-stats">
-                    <div class="quick-stat">
-                      <span class="stat-value">{{ offerStats.total }}</span>
-                      <span class="stat-text">Total</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="module-content">
-                  <OfferList 
-                    ref="offerListRef"
-                    @add-offer="handleAddOffer"
-                    @edit-offer="handleEditOffer" 
-                  />
-                </div>
+                <AttendanceWidget 
+                  @add-attendance="handleAddAttendance"
+                  @edit-attendance="handleEditAttendance"
+                />
               </div>
 
               <div class="module-card">
@@ -284,6 +264,14 @@
       @saved="handleJobRequisitionFormSuccess"
       @close="closeJobRequisitionModal"
     />
+
+    <!-- Add/Edit Attendance Modal -->
+    <AddAttendance 
+      :is-visible="showAttendanceModal"
+      :attendance="editingAttendance"
+      @success="handleAttendanceFormSuccess"
+      @close="closeAttendanceModal"
+    />
   </div>
 </template>
 
@@ -302,6 +290,8 @@ import OfferList from '../components/Offer/OfferList.vue'
 import AddOffer from '../components/Offer/AddOffer.vue'
 import JobRequisitionList from '../components/JobRequisition/JobRequisitionList.vue'
 import AddJobRequisition from '../components/JobRequisition/AddJobRequisition.vue'
+import AttendanceWidget from '../components/Attendance/AttendanceWidget.vue'
+import AddAttendance from '../components/Attendance/AddAttendance.vue'
 import { HRApiService } from '../services/hrApiService'
 
 export default {
@@ -319,7 +309,9 @@ export default {
     OfferList,
     AddOffer,
     JobRequisitionList,
-    AddJobRequisition
+    AddJobRequisition,
+    AttendanceWidget,
+    AddAttendance
   },
   setup() {
     // Reactive data
@@ -364,6 +356,8 @@ export default {
     const editingOffer = ref(null)
     const showJobRequisitionModal = ref(false)
     const editingJobRequisition = ref(null)
+    const showAttendanceModal = ref(false)
+    const editingAttendance = ref(null)
     
     // Component refs
     const employeeListRef = ref(null)
@@ -587,6 +581,27 @@ export default {
       }
     }
 
+    // Attendance modal handlers
+    const handleAddAttendance = () => {
+      editingAttendance.value = null
+      showAttendanceModal.value = true
+    }
+
+    const handleEditAttendance = (attendance) => {
+      editingAttendance.value = attendance
+      showAttendanceModal.value = true
+    }
+
+    const closeAttendanceModal = () => {
+      showAttendanceModal.value = false
+      editingAttendance.value = null
+    }
+
+    const handleAttendanceFormSuccess = () => {
+      closeAttendanceModal()
+      // Optionally refresh attendance data in the widget
+    }
+
     // Initialize
     onMounted(() => {
       fetchEmployeeStats()
@@ -617,6 +632,8 @@ export default {
       showJobRequisitionModal,
       editingJobRequisition,
       isEditingJobRequisition,
+      showAttendanceModal,
+      editingAttendance,
       employeeListRef,
       candidateListRef,
       interviewListRef,
@@ -647,7 +664,11 @@ export default {
       handleAddJobRequisition,
       handleEditJobRequisition,
       closeJobRequisitionModal,
-      handleJobRequisitionFormSuccess
+      handleJobRequisitionFormSuccess,
+      handleAddAttendance,
+      handleEditAttendance,
+      closeAttendanceModal,
+      handleAttendanceFormSuccess
     }
   }
 }
