@@ -263,7 +263,7 @@ export default {
 .sidebar {
   width: 280px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -271,7 +271,7 @@ export default {
   left: 0;
   top: 0;
   z-index: 40;
-  border-right: 1px solid #374151;
+  border-right: 1px solid #4b5563;
   transition: all 0.3s ease-in-out;
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1);
 }
@@ -285,7 +285,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem 1rem;
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid #4b5563;
   min-height: 80px;
 }
 
@@ -348,7 +348,7 @@ export default {
   padding: 1rem 0;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
+  scrollbar-color: #4b5563 transparent;
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -360,7 +360,7 @@ export default {
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #4b5563;
   border-radius: 2px;
 }
 
@@ -442,21 +442,21 @@ export default {
 
 .divider-line {
   border: none;
-  border-top: 1px solid #374151;
+  border-top: 1px solid #4b5563;
   margin: 0;
 }
 
 .divider-dot {
   width: 4px;
   height: 4px;
-  background: #374151;
+  background: #4b5563;
   border-radius: 50%;
   margin: 0 auto;
 }
 
 .sidebar-bottom {
   padding: 1rem 0;
-  border-top: 1px solid #374151;
+  border-top: 1px solid #4b5563;
   margin-top: auto;
 }
 
