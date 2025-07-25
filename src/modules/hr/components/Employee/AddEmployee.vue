@@ -131,10 +131,11 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Marital Status</label>
+                <label class="form-label required">Marital Status</label>
                 <select 
                   v-model="formData.marital_status" 
                   class="form-input"
+                  :class="{ 'error': errors.marital_status }"
                 >
                   <option value="">Select Status</option>
                   <option value="single">Single</option>
@@ -142,6 +143,7 @@
                   <option value="divorced">Divorced</option>
                   <option value="widowed">Widowed</option>
                 </select>
+                <span v-if="errors.marital_status" class="error-text">{{ errors.marital_status }}</span>
               </div>
               
               <div class="form-group">
@@ -388,13 +390,44 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Company ID</label>
-                <input 
+                <label class="form-label required">Company</label>
+                <select 
                   v-model="formData.company_id" 
-                  type="text" 
                   class="form-input"
-                  placeholder="Company ID (auto-assigned if empty)"
-                />
+                  :class="{ 'error': errors.company_id }"
+                  :disabled="isLoadingCompanies"
+                  required
+                >
+                  <option value="" v-if="isLoadingCompanies">Loading companies...</option>
+                  <option value="" v-else>Select Company</option>
+                  <option 
+                    v-for="company in companies" 
+                    :key="company.id" 
+                    :value="company.id"
+                  >
+                    {{ company.company_name }}
+                  </option>
+                </select>
+                <span v-if="errors.company_id" class="error-text">{{ errors.company_id }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Role</label>
+                <select 
+                  v-model="formData.role_id" 
+                  class="form-input"
+                  :class="{ 'error': errors.role_id }"
+                >
+                  <option value="">Select Role</option>
+                  <option 
+                    v-for="role in roles" 
+                    :key="role.id" 
+                    :value="role.id"
+                  >
+                    {{ role.name }}
+                  </option>
+                </select>
+                <span v-if="errors.role_id" class="error-text">{{ errors.role_id }}</span>
               </div>
 
               <div class="form-group">
@@ -731,6 +764,16 @@
               </div>
               
               <div class="form-group">
+                <label class="form-label">Issue Date</label>
+                <input 
+                  v-model="passportData.issue_date" 
+                  type="date" 
+                  class="form-input"
+                  placeholder="Select issue date"
+                />
+              </div>
+              
+              <div class="form-group">
                 <label class="form-label">Expiry Date</label>
                 <input 
                   v-model="passportData.expiry_date" 
@@ -793,7 +836,7 @@
 <script>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
-import Swal from 'sweetalert2'
+import { useToast } from 'vue-toastification'
 
 export default {
   name: 'AddEmployee',
@@ -803,11 +846,15 @@ export default {
   },
   emits: ['close', 'success'],
   setup(props, { emit }) {
+    const toast = useToast()
     const loading = ref(false)
     const errors = ref({})
     const departments = ref([])
     const positions = ref([])
     const managers = ref([])
+    const companies = ref([])
+    const roles = ref([])
+    const isLoadingCompanies = ref(false)
 
     // Form data
     const formData = reactive({
@@ -837,6 +884,7 @@ export default {
       currency: 'USD',
       pay_frequency: 'Bi-Weekly',
       national_id: '',
+      role_id: '',
       is_active: true,
       is_superadmin: false,
       password: '',
@@ -878,6 +926,7 @@ export default {
     const passportData = reactive({
       passport_number: '',
       expiry_date: '',
+      issue_date: '',
       country_of_issue: '',
       is_primary: true
     })
@@ -913,26 +962,78 @@ export default {
             }
           })
         }
+
+        // Populate bank account data
+        if (newEmployee.bank_accounts && newEmployee.bank_accounts.length > 0) {
+          const bankAccount = newEmployee.bank_accounts[0]
+          Object.keys(bankAccountData).forEach(key => {
+            if (bankAccount[key] !== undefined) {
+              bankAccountData[key] = bankAccount[key]
+            }
+          })
+        }
+
+        // Populate passport data
+        if (newEmployee.passports && newEmployee.passports.length > 0) {
+          const passport = newEmployee.passports[0]
+          Object.keys(passportData).forEach(key => {
+            if (passport[key] !== undefined) {
+              passportData[key] = passport[key]
+            }
+          })
+        }
       }
     }, { immediate: true })
 
     // Methods
     const loadLookups = async () => {
       try {
+        // Load HR lookups (departments, positions, roles)
         const response = await HRApiService.getLookups()
         if (response.success) {
           const lookups = response.data
           departments.value = lookups.filter(item => item.type === 'department' && item.is_active)
           positions.value = lookups.filter(item => item.type === 'position' && item.is_active)
+          roles.value = lookups.filter(item => item.type === 'role' && item.is_active)
+        } else {
+          console.warn('Failed to load HR lookups:', response.error)
+          toast.warning('Failed to load lookup data. Some form fields may be limited.', {
+            timeout: 3000,
+            icon: '⚠️'
+          })
         }
+
+        // Load companies
+        isLoadingCompanies.value = true
+        const companiesResponse = await HRApiService.getCompanies()
+        if (companiesResponse.success) {
+          companies.value = companiesResponse.data.filter(company => company.is_active)
+        } else {
+          console.warn('Failed to load companies:', companiesResponse.error)
+          toast.warning('Failed to load company list. Please check your connection and try again.', {
+            timeout: 3000,
+            icon: '⚠️'
+          })
+        }
+        isLoadingCompanies.value = false
 
         // Load managers (employees who can be managers)
         const employeesResponse = await HRApiService.getEmployees()
         if (employeesResponse.success) {
           managers.value = employeesResponse.data.filter(emp => emp.is_active)
+        } else {
+          console.warn('Failed to load managers:', employeesResponse.error)
+          toast.warning('Failed to load manager list. Some form fields may be limited.', {
+            timeout: 3000,
+            icon: '⚠️'
+          })
         }
       } catch (error) {
         console.error('Error loading lookups:', error)
+        toast.error('Failed to load form data. Please refresh and try again.', {
+          timeout: 5000,
+          icon: '❌'
+        })
       }
     }
 
@@ -942,14 +1043,15 @@ export default {
 
       // Validate required fields
       const requiredFields = [
-        'first_name', 'last_name', 'date_of_birth', 'gender', 'nationality',
-        'employee_code', 'hire_date', 'department_id', 'position_id',
-        'employment_type', 'work_location', 'base_salary'
+        'first_name', 'last_name', 'date_of_birth', 'gender', 'marital_status', 'nationality',
+        'employee_code', 'hire_date', 'probation_end_date', 'department_id', 'position_id', 'role_id',
+        'employment_type', 'work_location', 'base_salary', 'company_id'
       ]
 
       requiredFields.forEach(field => {
         if (!formData[field]) {
-          errors.value[field] = `${field.replace('_', ' ')} is required`
+          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          errors.value[field] = `${fieldName} is required`
           isValid = false
         }
       })
@@ -961,7 +1063,8 @@ export default {
 
       requiredContactFields.forEach(field => {
         if (!contactData[field]) {
-          errors.value[field] = `${field.replace('_', ' ')} is required`
+          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          errors.value[field] = `${fieldName} is required`
           isValid = false
         }
       })
@@ -970,7 +1073,8 @@ export default {
       const requiredAddressFields = ['line1', 'city', 'state', 'postal_code', 'country']
       requiredAddressFields.forEach(field => {
         if (!addressData[field]) {
-          errors.value[field] = `${field.replace('_', ' ')} is required`
+          const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          errors.value[field] = `${fieldName} is required`
           isValid = false
         }
       })
@@ -995,6 +1099,10 @@ export default {
     const prepareSubmissionData = () => {
       const data = { ...formData }
 
+      // Convert salary values to strings to match API expectations
+      data.base_salary = String(data.base_salary || '')
+      data.hourly_rate = data.hourly_rate ? String(data.hourly_rate) : null
+
       // Prepare contacts array
       const contacts = [{
         ...contactData,
@@ -1006,16 +1114,29 @@ export default {
         ...addressData
       }]
 
-      // Prepare bank accounts array (only if data provided)
+      // Prepare bank accounts array - include even if empty to match API structure
       const bank_accounts = []
-      if (bankAccountData.account_number || bankAccountData.bank_name) {
-        bank_accounts.push({...bankAccountData})
+      if (bankAccountData.account_number && bankAccountData.bank_name && bankAccountData.account_name) {
+        bank_accounts.push({
+          account_name: bankAccountData.account_name || '',
+          account_number: bankAccountData.account_number || '',
+          bank_name: bankAccountData.bank_name || '',
+          routing_number: bankAccountData.routing_number || '',
+          account_type: bankAccountData.account_type || 'SAVINGS',
+          is_primary: bankAccountData.is_primary !== undefined ? bankAccountData.is_primary : true
+        })
       }
 
-      // Prepare passports array (only if data provided)
+      // Prepare passports array - include even if empty to match API structure
       const passports = []
-      if (passportData.passport_number) {
-        passports.push({...passportData})
+      if (passportData.passport_number && passportData.expiry_date && passportData.country_of_issue) {
+        passports.push({
+          passport_number: passportData.passport_number || '',
+          expiry_date: passportData.expiry_date || '',
+          issue_date: passportData.issue_date || '',
+          country_of_issue: passportData.country_of_issue || '',
+          is_primary: passportData.is_primary !== undefined ? passportData.is_primary : true
+        })
       }
 
       // Add nested data
@@ -1025,19 +1146,68 @@ export default {
       data.passports = passports
       data.social_profiles = []
 
+      // Additional validation to prevent sending invalid data
+      if (isEdit.value) {
+        // For edits, ensure we have the employee ID
+        if (!props.employee || !props.employee.id) {
+          throw new Error('Employee ID is required for updates')
+        }
+      }
+
       // Set default values
       data.is_superadmin = formData.is_superadmin || false
       
-      // Generate password for new employees if not provided
+      // Handle password appropriately for create vs edit
       if (!isEdit.value && !data.password) {
+        // Generate password for new employees if not provided
         data.password = 'TempPassword123!'
+      } else if (isEdit.value) {
+        // For editing, only include password if it was actually provided (changed)
+        if (!data.password || data.password.trim() === '') {
+          delete data.password
+        }
       }
+
+      // Ensure required fields are properly handled
+      if (!data.termination_date) {
+        data.termination_date = null
+      }
+      
+      if (!data.manager_id) {
+        data.manager_id = null
+      }
+
+      // Ensure proper string formatting for monetary values
+      if (data.base_salary === '' || data.base_salary === null || data.base_salary === undefined) {
+        data.base_salary = '0.00'
+      }
+
+      // Clean up empty string values that should be null
+      Object.keys(data).forEach(key => {
+        if (data[key] === '' && ['middle_name', 'preferred_name', 'title', 'suffix', 'blood_group'].includes(key)) {
+          data[key] = data[key] || null
+        }
+      })
 
       return data
     }
 
     const handleSubmit = async () => {
       if (!validateForm()) {
+        // Show specific errors
+        const errorFields = Object.keys(errors.value)
+        if (errorFields.length > 0) {
+          const firstError = errors.value[errorFields[0]]
+          toast.warning(`Please fix the following: ${firstError}`, {
+            timeout: 4000,
+            icon: '⚠️'
+          })
+        } else {
+          toast.warning('Please fill in all required fields', {
+            timeout: 3000,
+            icon: '⚠️'
+          })
+        }
         return
       }
 
@@ -1045,34 +1215,106 @@ export default {
 
       try {
         const data = prepareSubmissionData()
+        console.log('Prepared data for submission:', data)
+        
+        // Additional validation check
+        if (!data.company_id || !data.role_id || !data.department_id || !data.position_id) {
+          throw new Error('Missing required lookup values. Please refresh the page and try again.')
+        }
+        
         let result
 
         if (isEdit.value) {
+          console.log('Editing employee with ID:', props.employee.id)
+          console.log('Update payload:', JSON.stringify(data, null, 2))
           result = await HRApiService.updateEmployee(props.employee.id, data)
         } else {
+          console.log('Creating new employee')
+          console.log('Create payload:', JSON.stringify(data, null, 2))
           result = await HRApiService.createEmployee(data)
         }
 
+        console.log('API result:', result)
+
         if (result.success) {
-          await Swal.fire({
-            title: 'Success!',
-            text: `Employee ${isEdit.value ? 'updated' : 'created'} successfully.`,
-            icon: 'success',
-            timer: 2000,
-            showConfirmButton: false
+          const employeeName = `${formData.first_name} ${formData.last_name}`
+          const actionText = isEdit.value ? 'updated' : 'created'
+          
+          toast.success(`Employee "${employeeName}" has been ${actionText} successfully!`, {
+            timeout: 4000,
+            icon: '✅'
           })
 
-          emit('success')
+          // Emit success with employee data for real-time updates
+          emit('success', result.data)
           closeModal()
         } else {
-          throw new Error(result.error)
+          // Handle API service error response
+          const actionText = isEdit.value ? 'update' : 'create'
+          let errorMessage = 'Unknown error occurred'
+          
+          if (result.error && typeof result.error === 'string') {
+            errorMessage = result.error
+          } else if (result.error && typeof result.error === 'object') {
+            errorMessage = JSON.stringify(result.error)
+          }
+          
+          // Improve error messages for common issues
+          if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {
+            errorMessage = 'An employee with this information already exists'
+          } else if (errorMessage.includes('required')) {
+            errorMessage = 'Please fill in all required fields'
+          } else if (errorMessage.includes('invalid')) {
+            errorMessage = 'Please check the information and try again'
+          } else if (errorMessage.includes('HTTP 400')) {
+            errorMessage = 'Invalid data provided. Please check all fields and try again'
+          } else if (errorMessage.includes('HTTP 500')) {
+            errorMessage = 'Server error. Please try again later'
+          }
+          
+          toast.error(`Failed to ${actionText} employee: ${errorMessage}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
         }
       } catch (error) {
         console.error('Error saving employee:', error)
-        await Swal.fire({
-          title: 'Error',
-          text: `Failed to ${isEdit.value ? 'update' : 'create'} employee: ${error.message}`,
-          icon: 'error'
+        const actionText = isEdit.value ? 'update' : 'create'
+        
+        // Parse error message for better user feedback
+        let errorMessage = 'Unknown error occurred'
+        
+        if (error && typeof error === 'object') {
+          if (error.message && typeof error.message === 'string') {
+            errorMessage = error.message
+          } else if (error.error && typeof error.error === 'string') {
+            errorMessage = error.error
+          } else {
+            // Convert object to readable string
+            try {
+              errorMessage = JSON.stringify(error)
+            } catch (e) {
+              errorMessage = 'Complex error occurred'
+            }
+          }
+        } else if (typeof error === 'string') {
+          errorMessage = error
+        }
+        
+        // Improve error messages for common issues
+        if (errorMessage.includes('duplicate') || errorMessage.includes('already exists')) {
+          errorMessage = 'An employee with this information already exists'
+        } else if (errorMessage.includes('required')) {
+          errorMessage = 'Please fill in all required fields'
+        } else if (errorMessage.includes('invalid')) {
+          errorMessage = 'Please check the information and try again'
+        } else if (errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again'
+        }
+        
+        toast.error(`Failed to ${actionText} employee: ${errorMessage}`, {
+          timeout: 5000,
+          icon: '❌'
         })
       } finally {
         loading.value = false
@@ -1119,6 +1361,9 @@ export default {
       departments,
       positions,
       managers,
+      companies,
+      roles,
+      isLoadingCompanies,
       isEdit,
       handleSubmit,
       closeModal
@@ -1642,5 +1887,14 @@ export default {
   border-bottom-right-radius: 0.5rem;
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+/* Custom Toast Styles */
+.success-toast {
+  border-left: 4px solid #059669 !important;
+}
+
+.error-toast {
+  border-left: 4px solid #DC2626 !important;
 }
 </style>

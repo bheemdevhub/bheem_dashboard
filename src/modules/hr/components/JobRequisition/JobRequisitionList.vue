@@ -4,61 +4,207 @@
     <div class="widget-header">
       <div class="widget-title-section">
         <h3 class="widget-title">
-          <svg class="widget-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 6h-2V4c0-1.11-.89-2-2-2H8c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
+          <svg class="widget-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+            <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
           </svg>
           Job Requisitions
+          <span class="item-count">({{ totalCount }})</span>
         </h3>
-        <span class="item-count">({{ totalCount }} items)</span>
       </div>
+      
       <div class="widget-actions">
+        <!-- Search Input -->
         <div class="search-container">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
+          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
           </svg>
-          <input 
-            v-model="searchText" 
-            type="text" 
+          <input
+            v-model="searchText"
+            type="text"
             placeholder="Search job requisitions..."
             class="search-input"
           />
         </div>
-        <button @click="showModal = true" class="add-btn" title="Add Job Requisition">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
+        
+        <!-- Add Button -->
+        <button @click="handleAddJobRequisition" class="add-btn" title="Add New Job Requisition">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
     </div>
 
-    <!-- Widget Content -->
-    <div class="widget-content">
-      <div class="coming-soon-container">
-        <svg class="coming-soon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M20 6h-2V4c0-1.11-.89-2-2-2H8c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
-        </svg>
-        <h4>Job Requisitions</h4>
-        <p>Manage job postings and requisitions</p>
-        <span class="coming-soon-badge">Coming Soon</span>
-      </div>
+    <!-- Job Requisition Content Display -->
+    <div v-if="selectedJobRequisition" class="job-requisition-content">
+      <JobRequisitionContent 
+        :jobRequisition="selectedJobRequisition" 
+        @refresh="fetchJobRequisitions"
+        @edit="handleEditJobRequisition"
+      />
     </div>
 
-    <!-- Modal placeholder -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-container" @click.stop>
-        <div class="modal-header">
-          <h2>Add Job Requisition</h2>
-          <button @click="closeModal" class="modal-close">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+    <!-- Widget Content -->
+    <div class="widget-content">
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Loading job requisitions...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-container">
+        <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <p>{{ error }}</p>
+        <button @click="fetchJobRequisitions" class="retry-btn">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+          </svg>
+          Try Again
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="!filteredJobRequisitions.length" class="empty-container">
+        <svg class="empty-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+          <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+        </svg>
+        <h4>No Job Requisitions Found</h4>
+        <p>{{ searchText ? 'No job requisitions match your search criteria.' : 'Get started by creating your first job requisition.' }}</p>
+        <button v-if="!searchText" @click="handleAddJobRequisition" class="add-first-btn">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Add Job Requisition
+        </button>
+      </div>
+
+      <!-- Data Table -->
+      <div v-else class="table-container">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="sortable" @click="sortBy('job_title')">
+                  Job Title
+                  <svg v-if="sortField === 'job_title'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
+                <th class="sortable" @click="sortBy('department_name')">
+                  Department
+                  <svg v-if="sortField === 'department_name'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
+                <th class="sortable" @click="sortBy('location')">
+                  Location
+                  <svg v-if="sortField === 'location'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
+                <th class="sortable" @click="sortBy('number_of_openings')">
+                  Openings
+                  <svg v-if="sortField === 'number_of_openings'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
+                <th class="sortable" @click="sortBy('requisition_date')">
+                  Requisition Date
+                  <svg v-if="sortField === 'requisition_date'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
+                <th class="sortable" @click="sortBy('is_active')">
+                  Status
+                  <svg v-if="sortField === 'is_active'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
+                <th class="actions-column">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                v-for="jobRequisition in paginatedJobRequisitions" 
+                :key="jobRequisition.id"
+                class="table-row"
+                :class="{ selected: selectedJobRequisition?.id === jobRequisition.id }"
+                @click="selectJobRequisition(jobRequisition)"
+              >
+                <td class="name-cell">
+                  <div class="avatar">
+                    {{ getJobInitials(jobRequisition) }}
+                  </div>
+                  <div>
+                    <div class="job-title">{{ jobRequisition.job_title }}</div>
+                    <div class="job-type">{{ getJobTypeName(jobRequisition) }}</div>
+                  </div>
+                </td>
+                <td>{{ getDepartmentName(jobRequisition) }}</td>
+                <td>{{ jobRequisition.location || 'N/A' }}</td>
+                <td>
+                  <span class="openings-badge">{{ jobRequisition.number_of_openings }}</span>
+                </td>
+                <td>{{ formatDate(jobRequisition.requisition_date) }}</td>
+                <td>
+                  <span class="status-badge" :class="jobRequisition.is_active ? 'active' : 'inactive'">
+                    {{ jobRequisition.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="actions-column">
+                  <div class="action-buttons">
+                    <!-- Actions removed as requested -->
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="modal-body">
-          <p>Job Requisition form will be implemented soon.</p>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+          <div class="pagination-info">
+            Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ filteredJobRequisitions.length }} job requisitions
+          </div>
+          
+          <div class="pagination-controls">
+            <button 
+              @click="goToPage(currentPage - 1)" 
+              :disabled="currentPage === 1"
+              class="pagination-btn"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            
+            <div class="page-numbers">
+              <button 
+                v-for="page in visiblePages" 
+                :key="page"
+                @click="goToPage(page)"
+                class="page-btn"
+                :class="{ active: page === currentPage }"
+              >
+                {{ page }}
+              </button>
+            </div>
+            
+            <button 
+              @click="goToPage(currentPage + 1)" 
+              :disabled="currentPage === totalPages"
+              class="pagination-btn"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -66,24 +212,313 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed, onMounted, watch, defineExpose } from 'vue'
+import { HRApiService } from '../../services/hrApiService'
+import JobRequisitionContent from './JobRequisitionContent.vue'
+import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'JobRequisitionList',
-  setup() {
+  components: {
+    JobRequisitionContent
+  },
+  emits: ['add-job-requisition', 'edit-job-requisition'],
+  setup(props, { emit }) {
+    const toast = useToast()
+    
+    // Reactive data
+    const jobRequisitions = ref([])
+    const selectedJobRequisition = ref(null)
+    const loading = ref(false)
+    const error = ref(null)
     const searchText = ref('')
-    const totalCount = ref(0)
-    const showModal = ref(false)
-
-    const closeModal = () => {
-      showModal.value = false
+    const departments = ref([])
+    const jobTypes = ref([])
+    
+    // Sorting
+    const sortField = ref('job_title')
+    const sortAsc = ref(true)
+    
+    // Pagination
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    
+    // Computed properties
+    const totalCount = computed(() => jobRequisitions.value.length)
+    
+    const filteredJobRequisitions = computed(() => {
+      let filtered = jobRequisitions.value
+      
+      if (searchText.value) {
+        const search = searchText.value.toLowerCase()
+        filtered = filtered.filter(jobReq => 
+          jobReq.job_title?.toLowerCase().includes(search) ||
+          jobReq.location?.toLowerCase().includes(search) ||
+          getDepartmentName(jobReq)?.toLowerCase().includes(search) ||
+          jobReq.experience_required?.toLowerCase().includes(search)
+        )
+      }
+      
+      // Sort
+      filtered.sort((a, b) => {
+        let aVal = a[sortField.value]
+        let bVal = b[sortField.value]
+        
+        // Handle department name sorting
+        if (sortField.value === 'department_name') {
+          aVal = getDepartmentName(a)
+          bVal = getDepartmentName(b)
+        }
+        
+        // Handle string comparison
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          aVal = aVal.toLowerCase()
+          bVal = bVal.toLowerCase()
+        }
+        
+        if (aVal < bVal) return sortAsc.value ? -1 : 1
+        if (aVal > bVal) return sortAsc.value ? 1 : -1
+        return 0
+      })
+      
+      return filtered
+    })
+    
+    const totalPages = computed(() => Math.ceil(filteredJobRequisitions.value.length / pageSize.value))
+    
+    const startIndex = computed(() => (currentPage.value - 1) * pageSize.value)
+    const endIndex = computed(() => Math.min(startIndex.value + pageSize.value, filteredJobRequisitions.value.length))
+    
+    const paginatedJobRequisitions = computed(() => {
+      return filteredJobRequisitions.value.slice(startIndex.value, endIndex.value)
+    })
+    
+    const visiblePages = computed(() => {
+      const pages = []
+      const total = totalPages.value
+      const current = currentPage.value
+      
+      if (total <= 7) {
+        for (let i = 1; i <= total; i++) {
+          pages.push(i)
+        }
+      } else {
+        if (current <= 4) {
+          for (let i = 1; i <= 5; i++) pages.push(i)
+          pages.push('...')
+          pages.push(total)
+        } else if (current >= total - 3) {
+          pages.push(1)
+          pages.push('...')
+          for (let i = total - 4; i <= total; i++) pages.push(i)
+        } else {
+          pages.push(1)
+          pages.push('...')
+          for (let i = current - 1; i <= current + 1; i++) pages.push(i)
+          pages.push('...')
+          pages.push(total)
+        }
+      }
+      
+      return pages
+    })
+    
+    // Methods
+    const fetchJobRequisitions = async (showSuccessToast = false) => {
+      loading.value = true
+      error.value = null
+      
+      try {
+        const result = await HRApiService.getJobRequisitions()
+        if (result.success) {
+          jobRequisitions.value = result.data || []
+          if (showSuccessToast) {
+            toast.success('Job requisitions refreshed successfully!', {
+              timeout: 3000,
+              icon: '✅'
+            })
+          }
+        } else {
+          error.value = result.error || 'Failed to fetch job requisitions'
+          toast.error(`Failed to fetch job requisitions: ${result.error}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      } catch (err) {
+        error.value = 'An unexpected error occurred'
+        console.error('Error fetching job requisitions:', err)
+        toast.error('An unexpected error occurred while fetching job requisitions', {
+          timeout: 5000,
+          icon: '❌'
+        })
+      } finally {
+        loading.value = false
+      }
     }
 
+    const fetchLookups = async () => {
+      try {
+        const lookupsResult = await HRApiService.getLookups()
+        if (lookupsResult.success) {
+          const lookups = lookupsResult.data
+          departments.value = lookups.filter(item => item.type === 'department' && item.is_active)
+          jobTypes.value = lookups.filter(item => item.type === 'job_type' && item.is_active)
+        }
+      } catch (err) {
+        console.error('Error fetching lookups:', err)
+      }
+    }
+    
+    const getJobInitials = (jobRequisition) => {
+      if (!jobRequisition?.job_title) return 'JR'
+      return jobRequisition.job_title
+        .split(' ')
+        .map(word => word[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
+
+    const getDepartmentName = (jobRequisition) => {
+      if (!jobRequisition.department_id) return 'N/A'
+      const dept = departments.value.find(d => d.id === jobRequisition.department_id)
+      return dept?.name || 'N/A'
+    }
+
+    const getJobTypeName = (jobRequisition) => {
+      if (!jobRequisition.job_type_id) return 'N/A'
+      const jobType = jobTypes.value.find(jt => jt.id === jobRequisition.job_type_id)
+      return jobType?.name || 'N/A'
+    }
+    
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A'
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return dateString
+      return date.toLocaleDateString('en-GB') // DD/MM/YYYY format
+    }
+    
+    const sortBy = (field) => {
+      if (sortField.value === field) {
+        sortAsc.value = !sortAsc.value
+      } else {
+        sortField.value = field
+        sortAsc.value = true
+      }
+      currentPage.value = 1
+    }
+    
+    const goToPage = (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+      }
+    }
+    
+    const selectJobRequisition = (jobRequisition) => {
+      selectedJobRequisition.value = jobRequisition
+    }
+    
+    const handleAddJobRequisition = () => {
+      emit('add-job-requisition')
+    }
+
+    const handleEditJobRequisition = (jobRequisition) => {
+      emit('edit-job-requisition', jobRequisition)
+    }
+    
+    const handleDeleteJobRequisition = async (jobRequisition) => {
+      const result = await Swal.fire({
+        title: 'Delete Job Requisition?',
+        text: `Are you sure you want to delete "${jobRequisition.job_title}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      })
+      
+      if (result.isConfirmed) {
+        try {
+          const deleteResult = await HRApiService.deleteJobRequisition(jobRequisition.id)
+          if (deleteResult.success) {
+            await fetchJobRequisitions()
+            if (selectedJobRequisition.value?.id === jobRequisition.id) {
+              selectedJobRequisition.value = null
+            }
+            toast.success(`Job requisition "${jobRequisition.job_title}" deleted successfully!`, {
+              timeout: 4000,
+              icon: '✅'
+            })
+          } else {
+            toast.error(`Failed to delete job requisition: ${deleteResult.error}`, {
+              timeout: 5000,
+              icon: '❌'
+            })
+          }
+        } catch (error) {
+          console.error('Error deleting job requisition:', error)
+          toast.error('An unexpected error occurred while deleting the job requisition', {
+            timeout: 5000,
+            icon: '❌'
+          })
+        }
+      }
+    }
+    
+    // Watch for search changes to reset pagination
+    watch(searchText, () => {
+      currentPage.value = 1
+    })
+    
+    // Initialize
+    onMounted(() => {
+      fetchLookups()
+      fetchJobRequisitions()
+    })
+
+    // Expose methods to parent component
+    defineExpose({
+      fetchJobRequisitions
+    })
+    
     return {
+      // Data
+      jobRequisitions,
+      selectedJobRequisition,
+      loading,
+      error,
       searchText,
+      sortField,
+      sortAsc,
+      currentPage,
+      pageSize,
+      departments,
+      jobTypes,
+      
+      // Computed
       totalCount,
-      showModal,
-      closeModal
+      filteredJobRequisitions,
+      totalPages,
+      startIndex,
+      endIndex,
+      paginatedJobRequisitions,
+      visiblePages,
+      
+      // Methods
+      fetchJobRequisitions,
+      getJobInitials,
+      getDepartmentName,
+      getJobTypeName,
+      formatDate,
+      sortBy,
+      goToPage,
+      selectJobRequisition,
+      handleAddJobRequisition,
+      handleEditJobRequisition,
+      handleDeleteJobRequisition
     }
   }
 }
@@ -103,7 +538,7 @@ export default {
 .widget-header {
   padding: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #f8f9fa;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -158,7 +593,7 @@ export default {
   font-size: 0.875rem;
   background: white;
   transition: all 0.2s ease;
-  min-width: 200px;
+  min-width: 250px;
 }
 
 .search-input:focus {
@@ -200,6 +635,10 @@ export default {
   height: 1.25rem;
 }
 
+.job-requisition-content {
+  border-bottom: 1px solid #e5e7eb;
+}
+
 .widget-content {
   flex: 1;
   display: flex;
@@ -207,7 +646,9 @@ export default {
   min-height: 0;
 }
 
-.coming-soon-container {
+.loading-container,
+.error-container,
+.empty-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -218,101 +659,287 @@ export default {
   flex: 1;
 }
 
-.coming-soon-icon {
-  width: 4rem;
-  height: 4rem;
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
   margin-bottom: 1rem;
-  stroke-width: 1;
 }
 
-.coming-soon-container h4 {
-  margin: 0 0 0.5rem 0;
-  color: #374151;
-  font-size: 1.5rem;
-  font-weight: 600;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.coming-soon-container p {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
+.error-icon,
+.empty-icon {
+  width: 3rem;
+  height: 3rem;
+  color: #ef4444;
+  margin-bottom: 1rem;
 }
 
-.coming-soon-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: #fef3c7;
-  color: #92400e;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
+.empty-icon {
+  color: #9ca3af;
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal-container {
-  background: white;
-  border-radius: 12px;
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 500px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.modal-close {
-  padding: 0.5rem;
-  background: none;
+.retry-btn,
+.add-first-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
   border: none;
+  border-radius: 0.5rem;
   cursor: pointer;
-  border-radius: 0.375rem;
-  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   transition: all 0.2s ease;
 }
 
-.modal-close:hover {
-  background: #f3f4f6;
+.retry-btn:hover,
+.add-first-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.retry-btn svg,
+.add-first-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
   color: #374151;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.modal-close svg {
-  width: 1.25rem;
-  height: 1.25rem;
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  position: relative;
 }
 
-.modal-body {
-  padding: 1.5rem;
-  text-align: center;
+.data-table th.sortable:hover {
+  background: #f3f4f6;
+}
+
+.sort-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.table-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f9fafb;
+}
+
+.table-row.selected {
+  background: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.job-title {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.job-type {
+  font-size: 0.75rem;
   color: #6b7280;
+}
+
+.openings-badge {
+  padding: 0.25rem 0.5rem;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.actions-column {
+  width: 100px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  padding: 0.375rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.delete-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.delete-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.pagination-container {
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn,
+.page-btn {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled),
+.page-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.pagination-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
 }
 
 /* Responsive Design */
@@ -327,8 +954,34 @@ export default {
   }
   
   .search-input {
-    min-width: auto;
-    flex: 1;
+    min-width: 200px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-input {
+    min-width: 150px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.875rem;
   }
 }
 </style>

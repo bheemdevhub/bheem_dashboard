@@ -82,6 +82,7 @@
                 </div>
                 <div class="module-content">
                   <EmployeeList 
+                    ref="employeeListRef"
                     @add-employee="handleAddEmployee"
                     @edit-employee="handleEditEmployee" 
                   />
@@ -91,34 +92,28 @@
               <div class="module-card">
                 <div class="module-header">
                   <div class="module-icon">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                      <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
                     </svg>
                   </div>
                   <div class="module-info">
                     <h3 class="module-title">Job Requisitions</h3>
                     <p class="module-description">Create and manage job openings and requirements</p>
                   </div>
-                  <div class="module-actions">
-                    <button class="action-btn primary">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                      </svg>
-                      New Requisition
-                    </button>
+                  <div class="module-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ jobRequisitionStats.total }}</span>
+                      <span class="stat-text">Total</span>
+                    </div>
                   </div>
                 </div>
                 <div class="module-content">
-                  <div class="coming-soon-content">
-                    <div class="coming-soon-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12,6 12,12 16,14"></polyline>
-                      </svg>
-                    </div>
-                    <h4>Coming Soon</h4>
-                    <p>Job requisition management will be available in the next update</p>
-                  </div>
+                  <JobRequisitionList 
+                    ref="jobRequisitionListRef"
+                    @add-job-requisition="handleAddJobRequisition"
+                    @edit-job-requisition="handleEditJobRequisition" 
+                  />
                 </div>
               </div>
 
@@ -280,16 +275,27 @@
       @success="handleFormSuccess"
       @close="closeModal"
     />
+
+    <!-- Add/Edit Job Requisition Modal -->
+    <AddJobRequisition 
+      v-if="showJobRequisitionModal"
+      :is-edit="isEditingJobRequisition"
+      :job-requisition="editingJobRequisition"
+      @saved="handleJobRequisitionFormSuccess"
+      @close="closeJobRequisitionModal"
+    />
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import SidebarComponent from '@/components/SidebarComponent.vue'
 import NavbarComponent from '@/components/NavbarComponent.vue'
 import FooterComponent from '@/components/FooterComponent.vue'
 import EmployeeList from '../components/Employee/EmployeeList.vue'
 import AddEmployee from '../components/Employee/AddEmployee.vue'
+import JobRequisitionList from '../components/JobRequisition/JobRequisitionList.vue'
+import AddJobRequisition from '../components/JobRequisition/AddJobRequisition.vue'
 import { HRApiService } from '../services/hrApiService'
 
 export default {
@@ -299,7 +305,9 @@ export default {
     NavbarComponent,
     FooterComponent,
     EmployeeList,
-    AddEmployee
+    AddEmployee,
+    JobRequisitionList,
+    AddJobRequisition
   },
   setup() {
     // Reactive data
@@ -309,10 +317,21 @@ export default {
       active: 0,
       inactive: 0
     })
+    const jobRequisitionStats = ref({
+      total: 0,
+      active: 0,
+      inactive: 0
+    })
     
     // Modal state
     const showModal = ref(false)
     const editingEmployee = ref(null)
+    const showJobRequisitionModal = ref(false)
+    const editingJobRequisition = ref(null)
+    
+    // Component refs
+    const employeeListRef = ref(null)
+    const jobRequisitionListRef = ref(null)
 
     // Methods
     const handleSidebarToggle = (collapsed) => {
@@ -335,7 +354,23 @@ export default {
       }
     }
 
-    // Modal handlers
+    const fetchJobRequisitionStats = async () => {
+      try {
+        const result = await HRApiService.getJobRequisitions()
+        if (result.success) {
+          const jobRequisitions = result.data || []
+          jobRequisitionStats.value = {
+            total: jobRequisitions.length,
+            active: jobRequisitions.filter(jr => jr.is_active).length,
+            inactive: jobRequisitions.filter(jr => !jr.is_active).length
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching job requisition stats:', error)
+      }
+    }
+
+    // Employee modal handlers
     const handleAddEmployee = () => {
       editingEmployee.value = null
       showModal.value = true
@@ -353,25 +388,71 @@ export default {
 
     const handleFormSuccess = () => {
       closeModal()
-      fetchEmployeeStats() // Refresh stats after adding/editing employee
+      // Refresh stats after adding/editing employee
+      fetchEmployeeStats()
+      // Refresh employee list to show new employee without page refresh
+      if (employeeListRef.value && employeeListRef.value.fetchEmployees) {
+        employeeListRef.value.fetchEmployees()
+      }
+    }
+
+    // Job Requisition modal handlers
+    const handleAddJobRequisition = () => {
+      editingJobRequisition.value = null
+      showJobRequisitionModal.value = true
+    }
+
+    const handleEditJobRequisition = (jobRequisition) => {
+      editingJobRequisition.value = jobRequisition
+      showJobRequisitionModal.value = true
+    }
+
+    const closeJobRequisitionModal = () => {
+      showJobRequisitionModal.value = false
+      editingJobRequisition.value = null
+    }
+
+    const handleJobRequisitionFormSuccess = () => {
+      closeJobRequisitionModal()
+      // Refresh stats after adding/editing job requisition
+      fetchJobRequisitionStats()
+      // Refresh job requisition list to show new job requisition without page refresh
+      if (jobRequisitionListRef.value && jobRequisitionListRef.value.fetchJobRequisitions) {
+        jobRequisitionListRef.value.fetchJobRequisitions()
+      }
     }
 
     // Initialize
     onMounted(() => {
       fetchEmployeeStats()
+      fetchJobRequisitionStats()
     })
+
+    // Computed properties
+    const isEditingJobRequisition = computed(() => editingJobRequisition.value !== null);
 
     return {
       sidebarCollapsed,
       employeeStats,
+      jobRequisitionStats,
       showModal,
       editingEmployee,
+      showJobRequisitionModal,
+      editingJobRequisition,
+      isEditingJobRequisition,
+      employeeListRef,
+      jobRequisitionListRef,
       handleSidebarToggle,
       fetchEmployeeStats,
+      fetchJobRequisitionStats,
       handleAddEmployee,
       handleEditEmployee,
       closeModal,
-      handleFormSuccess
+      handleFormSuccess,
+      handleAddJobRequisition,
+      handleEditJobRequisition,
+      closeJobRequisitionModal,
+      handleJobRequisitionFormSuccess
     }
   }
 }

@@ -301,7 +301,7 @@
 <script>
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
-import Swal from 'sweetalert2'
+import { useToast } from 'vue-toastification'
 
 export default {
   name: 'EmployeeContent',
@@ -313,6 +313,13 @@ export default {
   },
   emits: ['refresh', 'edit'],
   setup(props, { emit }) {
+    const toast = useToast()
+    
+    // Template refs
+    const departmentSelect = ref(null)
+    const positionSelect = ref(null)
+    const roleSelect = ref(null)
+    
     // Reactive data
     const activeTab = ref('attendance')
     const departments = ref([])
@@ -501,9 +508,18 @@ export default {
       editValues[`${field}_id`] = props.employee[`${field}_id`] || ''
       
       nextTick(() => {
-        const selectRef = `${field}Select`
-        if (this.$refs[selectRef]) {
-          this.$refs[selectRef].focus()
+        let selectElement = null
+        
+        if (field === 'department') {
+          selectElement = departmentSelect.value
+        } else if (field === 'position') {
+          selectElement = positionSelect.value
+        } else if (field === 'role') {
+          selectElement = roleSelect.value
+        }
+        
+        if (selectElement) {
+          selectElement.focus()
         }
       })
     }
@@ -526,22 +542,48 @@ export default {
         const result = await HRApiService.updateEmployee(props.employee.id, updateData)
         
         if (result.success) {
-          await Swal.fire({
-            title: 'Updated!',
-            text: `${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully.`,
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
+          toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully.`, {
+            timeout: 1500,
+            icon: '✅'
           })
           emit('refresh')
         } else {
-          throw new Error(result.error)
+          // Handle API service error response
+          let errorMessage = 'Unknown error occurred'
+          
+          if (result.error && typeof result.error === 'string') {
+            errorMessage = result.error
+          } else if (result.error && typeof result.error === 'object') {
+            try {
+              errorMessage = JSON.stringify(result.error)
+            } catch (e) {
+              errorMessage = 'Complex error occurred'
+            }
+          }
+          
+          throw new Error(errorMessage)
         }
       } catch (error) {
-        await Swal.fire({
-          title: 'Error',
-          text: `Failed to update ${field}: ${error.message}`,
-          icon: 'error'
+        console.error(`Error updating ${field}:`, error)
+        
+        // Enhanced error message parsing
+        let errorMessage = 'Unknown error occurred'
+        
+        if (error && typeof error.message === 'string') {
+          errorMessage = error.message
+        } else if (error && typeof error === 'string') {
+          errorMessage = error
+        } else if (error && typeof error === 'object') {
+          try {
+            errorMessage = JSON.stringify(error)
+          } catch (e) {
+            errorMessage = 'Complex error object - check console for details'
+          }
+        }
+        
+        toast.error(`Failed to update ${field}: ${errorMessage}`, {
+          timeout: 5000,
+          icon: '❌'
         })
       } finally {
         saving[field] = false
@@ -559,24 +601,51 @@ export default {
         })
         
         if (result.success) {
-          await Swal.fire({
-            title: 'Updated!',
-            text: `Employee status updated to ${newStatus ? 'Active' : 'Inactive'}.`,
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
+          toast.success(`Employee status updated to ${newStatus ? 'Active' : 'Inactive'}.`, {
+            timeout: 1500,
+            icon: '✅'
           })
           emit('refresh')
         } else {
-          throw new Error(result.error)
+          // Handle API service error response
+          let errorMessage = 'Unknown error occurred'
+          
+          if (result.error && typeof result.error === 'string') {
+            errorMessage = result.error
+          } else if (result.error && typeof result.error === 'object') {
+            try {
+              errorMessage = JSON.stringify(result.error)
+            } catch (e) {
+              errorMessage = 'Complex error occurred'
+            }
+          }
+          
+          throw new Error(errorMessage)
         }
       } catch (error) {
+        console.error('Error updating status:', error)
+        
         // Revert the checkbox
         event.target.checked = !newStatus
-        await Swal.fire({
-          title: 'Error',
-          text: `Failed to update status: ${error.message}`,
-          icon: 'error'
+        
+        // Enhanced error message parsing
+        let errorMessage = 'Unknown error occurred'
+        
+        if (error && typeof error.message === 'string') {
+          errorMessage = error.message
+        } else if (error && typeof error === 'string') {
+          errorMessage = error
+        } else if (error && typeof error === 'object') {
+          try {
+            errorMessage = JSON.stringify(error)
+          } catch (e) {
+            errorMessage = 'Complex error object - check console for details'
+          }
+        }
+        
+        toast.error(`Failed to update status: ${errorMessage}`, {
+          timeout: 5000,
+          icon: '❌'
         })
       } finally {
         saving.status = false
@@ -593,6 +662,11 @@ export default {
     })
     
     return {
+      // Template refs
+      departmentSelect,
+      positionSelect,
+      roleSelect,
+      
       // Data
       activeTab,
       tabs,

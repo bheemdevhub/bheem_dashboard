@@ -198,9 +198,10 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, defineExpose } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import EmployeeContent from './EmployeeContent.vue'
+import { useToast } from 'vue-toastification'
 import Swal from 'sweetalert2'
 
 export default {
@@ -210,6 +211,8 @@ export default {
   },
   emits: ['add-employee', 'edit-employee'],
   setup(props, { emit }) {
+    const toast = useToast()
+    
     // Reactive data
     const employees = ref([])
     const selectedEmployee = ref(null)
@@ -309,7 +312,7 @@ export default {
     })
     
     // Methods
-    const fetchEmployees = async () => {
+    const fetchEmployees = async (showSuccessToast = false) => {
       loading.value = true
       error.value = null
       
@@ -318,11 +321,26 @@ export default {
         
         if (result.success) {
           employees.value = result.data.items || []
+          // Show success toast only when explicitly requested (like refresh after delete)
+          if (showSuccessToast && employees.value.length > 0) {
+            toast.success(`Successfully loaded ${employees.value.length} employees`, {
+              timeout: 2000,
+              icon: '📋'
+            })
+          }
         } else {
           error.value = result.error || 'Failed to fetch employees'
+          toast.error(`Failed to load employees: ${result.error || 'Unknown error'}`, {
+            timeout: 5000,
+            icon: '❌'
+          })
         }
       } catch (err) {
         error.value = err.message || 'An unexpected error occurred'
+        toast.error(`Error loading employees: ${err.message || 'Connection failed'}`, {
+          timeout: 5000,
+          icon: '🔌'
+        })
       } finally {
         loading.value = false
       }
@@ -391,27 +409,25 @@ export default {
           const deleteResult = await HRApiService.deleteEmployee(employee.id)
           
           if (deleteResult.success) {
-            await Swal.fire({
-              title: 'Deleted!',
-              text: 'Employee has been deleted successfully.',
-              icon: 'success',
-              timer: 2000,
-              showConfirmButton: false
+            // Use vue-toastification for success message
+            toast.success(`Employee "${getFullName(employee)}" has been deleted successfully`, {
+              timeout: 4000,
+              icon: '🗑️'
             })
             
             if (selectedEmployee.value?.id === employee.id) {
               selectedEmployee.value = null
             }
             
-            await fetchEmployees()
+            await fetchEmployees(true)
           } else {
             throw new Error(deleteResult.error)
           }
         } catch (err) {
-          await Swal.fire({
-            title: 'Error',
-            text: err.message || 'Failed to delete employee',
-            icon: 'error'
+          // Use vue-toastification for error message  
+          toast.error(`Failed to delete employee: ${err.message || 'Unknown error'}`, {
+            timeout: 5000,
+            icon: '❌'
           })
         }
       }
@@ -425,6 +441,11 @@ export default {
     // Initialize
     onMounted(() => {
       fetchEmployees()
+    })
+
+    // Expose methods to parent component
+    defineExpose({
+      fetchEmployees
     })
     
     return {
