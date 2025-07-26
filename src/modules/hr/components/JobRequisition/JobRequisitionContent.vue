@@ -1,5 +1,5 @@
 <template>
-  <div class="job-requisition-content">
+  <div class="job-requisition-content" :class="{ 'expanded-view': isExpanded }">
     <!-- Header Section -->
     <div class="content-header">
       <div class="job-info">
@@ -159,6 +159,10 @@ export default {
     jobRequisition: {
       type: Object,
       required: true
+    },
+    isExpanded: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['refresh', 'edit'],
@@ -489,6 +493,40 @@ export default {
 
   .separator {
     display: none;
+  }
+}
+
+/* Expanded View Styles */
+.job-requisition-content.expanded-view {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.job-requisition-content.expanded-view .content-header {
+  padding: 16px 20px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 8px 8px 0 0;
+}
+
+.job-requisition-content.expanded-view .status-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.job-requisition-content.expanded-view .details-grid {
+  padding: 20px;
+}
+
+/* Mobile responsive for expanded view */
+@media (max-width: 768px) {
+  .job-requisition-content.expanded-view .content-header,
+  .job-requisition-content.expanded-view .status-section,
+  .job-requisition-content.expanded-view .details-grid {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 </style>

@@ -278,9 +278,10 @@ export default {
 }
 
 .container {
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .navbar-content {
@@ -1094,6 +1095,12 @@ export default {
 }
 
 /* Mobile Responsive */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar-nav {
     display: flex;

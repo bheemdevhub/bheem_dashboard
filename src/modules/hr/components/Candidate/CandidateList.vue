@@ -88,6 +88,11 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th class="expand-column">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
                 <th class="sortable" @click="sortBy('name')">
                   Name
                   <svg v-if="sortField === 'name'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
@@ -116,41 +121,73 @@
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="candidate in paginatedCandidates" 
-                :key="candidate.id" 
-                @click="selectCandidate(candidate)"
-                class="table-row"
-                :class="{ selected: selectedCandidate?.id === candidate.id }"
-              >
-                <td>
-                  <div class="name-cell">
-                    <div class="avatar">{{ getInitials(candidate) }}</div>
-                    <div>
-                      <div class="candidate-name">{{ getFullName(candidate) }}</div>
-                      <div class="candidate-phone">{{ getMobile(candidate) }}</div>
+              <template v-for="candidate in paginatedCandidates" :key="candidate.id">
+                <!-- Main Candidate Row -->
+                <tr 
+                  @click="toggleCandidateExpansion(candidate)"
+                  class="table-row"
+                  :class="{ 
+                    'selected': selectedCandidate?.id === candidate.id,
+                    'expanded': expandedCandidates.includes(candidate.id)
+                  }"
+                >
+                  <td class="expand-cell">
+                    <div class="expand-cell">
+                      <button 
+                        @click.stop="toggleCandidateExpansion(candidate)"
+                        class="expand-btn"
+                        :class="{ 'expanded': expandedCandidates.includes(candidate.id) }"
+                        title="Toggle candidate details"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="candidate-email">{{ getEmail(candidate) }}</span>
-                </td>
-                <td>
-                  <span class="status-badge" :class="getStatusClass(candidate.status)">
-                    {{ candidate.status || 'Applied' }}
-                  </span>
-                </td>
-                <td>{{ formatDate(candidate.application_date) }}</td>
-                <td>
-                  <div class="action-buttons">
-                    <button @click.stop="handleDeleteCandidate(candidate)" class="action-btn delete-btn" title="Delete Candidate">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td>
+                    <div class="name-cell">
+                      <div class="avatar">{{ getInitials(candidate) }}</div>
+                      <div>
+                        <div class="candidate-name">{{ getFullName(candidate) }}</div>
+                        <div class="candidate-phone">{{ getMobile(candidate) }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="candidate-email">{{ getEmail(candidate) }}</span>
+                  </td>
+                  <td>
+                    <span class="status-badge" :class="getStatusClass(candidate.status)">
+                      {{ candidate.status || 'Applied' }}
+                    </span>
+                  </td>
+                  <td>{{ formatDate(candidate.application_date) }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button @click.stop="handleDeleteCandidate(candidate)" class="action-btn delete-btn" title="Delete Candidate">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Expandable Candidate Details Row -->
+                <tr v-if="expandedCandidates.includes(candidate.id)" class="expanded-row">
+                  <td colspan="6" class="expanded-content">
+                    <div class="candidate-details-container">
+                      <CandidateContent 
+                        :candidate="candidate" 
+                        @refresh="fetchCandidates"
+                        @edit="handleEditCandidate"
+                        :is-expanded="true"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -203,7 +240,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch, defineExpose } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import CandidateContent from './CandidateContent.vue'
 import { useToast } from 'vue-toastification'
@@ -221,6 +258,7 @@ export default {
     // Reactive data
     const candidates = ref([])
     const selectedCandidate = ref(null)
+    const expandedCandidates = ref([])
     const loading = ref(false)
     const error = ref(null)
     const searchText = ref('')
@@ -413,6 +451,15 @@ export default {
       selectedCandidate.value = candidate
     }
     
+    const toggleCandidateExpansion = (candidate) => {
+      const index = expandedCandidates.value.indexOf(candidate.id)
+      if (index > -1) {
+        expandedCandidates.value.splice(index, 1)
+      } else {
+        expandedCandidates.value.push(candidate.id)
+      }
+    }
+    
     const handleAddCandidate = () => {
       emit('add-candidate')
     }
@@ -469,16 +516,12 @@ export default {
     onMounted(() => {
       fetchCandidates()
     })
-
-    // Expose methods to parent component
-    defineExpose({
-      fetchCandidates
-    })
     
     return {
       // Data
       candidates,
       selectedCandidate,
+      expandedCandidates,
       loading,
       error,
       searchText,
@@ -507,6 +550,7 @@ export default {
       sortBy,
       goToPage,
       selectCandidate,
+      toggleCandidateExpansion,
       handleAddCandidate,
       handleEditCandidate,
       handleDeleteCandidate
@@ -774,6 +818,69 @@ export default {
 .table-row.selected {
   background: #eff6ff;
   border-color: #dbeafe;
+}
+
+.table-row.expanded {
+  background: #f0f9ff;
+  border-bottom: 1px solid #0ea5e9;
+}
+
+.expand-column {
+  width: 60px;
+}
+
+.expand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.expand-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.expanded-row {
+  background: #f8fafc !important;
+}
+
+.expanded-row:hover {
+  background: #f8fafc !important;
+}
+
+.expanded-content {
+  padding: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.candidate-details-container {
+  background: #ffffff;
+  border-radius: 8px;
+  margin: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .name-cell {

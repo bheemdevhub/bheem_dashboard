@@ -89,6 +89,11 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th class="expand-column">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
                 <th class="sortable" @click="sortBy('candidate_name')">
                   Candidate
                   <svg v-if="sortField === 'candidate_name'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
@@ -104,85 +109,116 @@
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="onboarding in paginatedOnboardings" 
-                :key="onboarding.id"
-                class="table-row"
-                @click="selectOnboarding(onboarding)"
-              >
-                <td>
-                  <div class="name-cell">
-                    <div class="avatar">
-                      {{ getCandidateInitials(onboarding) }}
-                    </div>
-                    <div class="name-info">
-                      <div class="name">{{ getCandidateName(onboarding) }}</div>
-                      <div class="email">{{ getCandidateEmail(onboarding) }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="offer-info">
-                    <span class="offer-badge" :class="getOfferStatusClass(onboarding)">
-                      {{ getOfferStatus(onboarding) }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div class="progress-info">
-                    <span>{{ getDocumentProgress(onboarding) }}%</span>
-                    <div class="progress-bar">
-                      <div class="progress-fill" :style="{ width: getDocumentProgress(onboarding) + '%' }"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="progress-info">
-                    <span>{{ getSystemProgress(onboarding) }}%</span>
-                    <div class="progress-bar">
-                      <div class="progress-fill" :style="{ width: getSystemProgress(onboarding) + '%' }"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="progress-info">
-                    <span>{{ getOrientationProgress(onboarding) }}%</span>
-                    <div class="progress-bar">
-                      <div class="progress-fill" :style="{ width: getOrientationProgress(onboarding) + '%' }"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="overall-progress">
-                    <span class="progress-text">{{ getOverallProgress(onboarding) }}%</span>
-                    <div class="circular-progress" :class="getProgressClass(onboarding)">
-                      <svg class="progress-ring" width="30" height="30">
-                        <circle
-                          class="progress-ring-circle"
-                          stroke="currentColor"
-                          stroke-width="3"
-                          fill="transparent"
-                          r="12"
-                          cx="15"
-                          cy="15"
-                          :stroke-dasharray="75.4"
-                          :stroke-dashoffset="75.4 - (75.4 * getOverallProgress(onboarding)) / 100"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <button @click.stop="handleDeleteOnboarding(onboarding)" class="action-btn delete-btn" title="Delete Onboarding">
+              <template v-for="onboarding in paginatedOnboardings" :key="onboarding.id">
+                <!-- Main Onboarding Row -->
+                <tr 
+                  @click="toggleOnboardingExpansion(onboarding)"
+                  class="table-row"
+                  :class="{ 
+                    'selected': selectedOnboarding?.id === onboarding.id,
+                    'expanded': expandedOnboardings.includes(onboarding.id)
+                  }"
+                >
+                  <td class="expand-cell">
+                    <button 
+                      @click.stop="toggleOnboardingExpansion(onboarding)"
+                      class="expand-btn"
+                      :class="{ 'expanded': expandedOnboardings.includes(onboarding.id) }"
+                      title="Toggle onboarding details"
+                    >
                       <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V7a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                       </svg>
                     </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td>
+                    <div class="name-cell">
+                      <div class="avatar">
+                        {{ getCandidateInitials(onboarding) }}
+                      </div>
+                      <div class="name-info">
+                        <div class="name">{{ getCandidateName(onboarding) }}</div>
+                        <div class="email">{{ getCandidateEmail(onboarding) }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="offer-info">
+                      <span class="offer-badge" :class="getOfferStatusClass(onboarding)">
+                        {{ getOfferStatus(onboarding) }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="progress-info">
+                      <span>{{ getDocumentProgress(onboarding) }}%</span>
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: getDocumentProgress(onboarding) + '%' }"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="progress-info">
+                      <span>{{ getSystemProgress(onboarding) }}%</span>
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: getSystemProgress(onboarding) + '%' }"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="progress-info">
+                      <span>{{ getOrientationProgress(onboarding) }}%</span>
+                      <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: getOrientationProgress(onboarding) + '%' }"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="overall-progress">
+                      <span class="progress-text">{{ getOverallProgress(onboarding) }}%</span>
+                      <div class="circular-progress" :class="getProgressClass(onboarding)">
+                        <svg class="progress-ring" width="30" height="30">
+                          <circle
+                            class="progress-ring-circle"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            fill="transparent"
+                            r="12"
+                            cx="15"
+                            cy="15"
+                            :stroke-dasharray="75.4"
+                            :stroke-dashoffset="75.4 - (75.4 * getOverallProgress(onboarding)) / 100"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button @click.stop="handleDeleteOnboarding(onboarding)" class="action-btn delete-btn" title="Delete Onboarding">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V7a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Expandable Onboarding Details Row -->
+                <tr v-if="expandedOnboardings.includes(onboarding.id)" class="expanded-row">
+                  <td colspan="8" class="expanded-content">
+                    <div class="onboarding-details-container">
+                      <OnboardingContent 
+                        :onboarding="onboarding" 
+                        @refresh="fetchOnboardings"
+                        @edit="handleEditOnboarding"
+                        :is-expanded="true"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -256,6 +292,7 @@ export default {
     const error = ref(null)
     const searchText = ref('')
     const selectedOnboarding = ref(null)
+    const expandedOnboardings = ref([])
     
     // Pagination
     const currentPage = ref(1)
@@ -548,6 +585,15 @@ export default {
       }
     }
 
+    const toggleOnboardingExpansion = (onboarding) => {
+      const index = expandedOnboardings.value.indexOf(onboarding.id)
+      if (index > -1) {
+        expandedOnboardings.value.splice(index, 1)
+      } else {
+        expandedOnboardings.value.push(onboarding.id)
+      }
+    }
+
     // Watch for search changes to reset pagination
     watch(searchText, () => {
       currentPage.value = 1
@@ -567,6 +613,7 @@ export default {
       error,
       searchText,
       selectedOnboarding,
+      expandedOnboardings,
       currentPage,
       totalCount,
       filteredOnboardings,
@@ -593,7 +640,8 @@ export default {
       getOverallProgress,
       getProgressClass,
       goToPage,
-      sortBy
+      sortBy,
+      toggleOnboardingExpansion
     }
   }
 }
@@ -1128,5 +1176,69 @@ export default {
 .page-btn.active:hover {
   background: #2563eb;
   border-color: #2563eb;
+}
+
+/* Expandable Rows */
+.expand-column {
+  width: 60px;
+}
+
+.expand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.expand-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.table-row.expanded {
+  background: #f0f9ff;
+  border-bottom: 1px solid #0ea5e9;
+}
+
+.expanded-row {
+  background: #f8fafc !important;
+}
+
+.expanded-row:hover {
+  background: #f8fafc !important;
+}
+
+.expanded-content {
+  padding: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.onboarding-details-container {
+  background: #ffffff;
+  border-radius: 8px;
+  margin: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 </style>

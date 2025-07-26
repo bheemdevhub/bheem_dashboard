@@ -1,23 +1,23 @@
 <template>
   <div class="hr-dashboard">
-    <div class="app-container">
+    <div class="dashboard-layout">
       <!-- Sidebar -->
       <SidebarComponent 
-        :collapsed="sidebarCollapsed" 
-        @toggle="handleSidebarToggle" 
+        @toggle-sidebar="handleSidebarToggle" 
       />
 
-      <div class="content-wrapper" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+      <div class="main-content" :class="{ 'content-collapsed': sidebarCollapsed }">
         <!-- Navbar -->
         <NavbarComponent />
 
         <!-- Main Content -->
-        <main class="main-content">
-          <!-- Employee Statistics Section -->
-          <section class="stats-section">
-            <div class="stats-container">
-              <div class="stat-card">
-                <div class="stat-content">
+        <main class="dashboard-main">
+          <div class="container">
+            <!-- Employee Statistics Section -->
+            <section class="stats-section">
+              <div class="stats-container">
+                <div class="stat-card">
+                  <div class="stat-content">
                   <div class="stat-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -238,6 +238,7 @@
               </div>
             </div>
           </section>
+          </div>
         </main>
 
         <!-- Footer -->
@@ -788,27 +789,38 @@ export default {
   background: #f8f9fa;
 }
 
-.app-container {
-  display: flex;
+.dashboard-layout {
   min-height: 100vh;
-}
-
-.content-wrapper {
-  flex: 1;
-  margin-left: 250px;
   display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
-}
-
-.content-wrapper.sidebar-collapsed {
-  margin-left: 70px;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #f1f5f9 100%);
+  position: relative;
+  overflow-x: hidden;
 }
 
 .main-content {
   flex: 1;
-  padding: 2rem;
-  background: #f8f9fa;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.content-collapsed {
+  margin-left: 80px;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+.container {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 /* Statistics Section */
@@ -1084,13 +1096,17 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .content-wrapper,
-  .content-wrapper.sidebar-collapsed {
+  .main-content,
+  .main-content.content-collapsed {
     margin-left: 0;
   }
   
-  .main-content {
-    padding: 1rem;
+  .dashboard-main {
+    padding: 1rem 0;
+  }
+  
+  .container {
+    padding: 0 1rem;
   }
   
   .stats-container {

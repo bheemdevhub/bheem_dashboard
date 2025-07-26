@@ -36,16 +36,6 @@
       </div>
     </div>
 
-    <!-- Job Requisition Content Display -->
-    <div v-if="selectedJobRequisition" class="job-requisition-content">
-      <JobRequisitionContent 
-        :jobRequisition="selectedJobRequisition" 
-        @refresh="fetchJobRequisitions"
-        @edit="handleEditJobRequisition"
-        @back="selectedJobRequisition = null"
-      />
-    </div>
-
     <!-- Widget Content -->
     <div class="widget-content">
       <!-- Loading State -->
@@ -90,6 +80,11 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th class="expand-column">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
                 <th class="sortable" @click="sortBy('job_title')">
                   Job Title
                   <svg v-if="sortField === 'job_title'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
@@ -124,42 +119,75 @@
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="jobRequisition in paginatedJobRequisitions" 
-                :key="jobRequisition.id"
-                class="table-row"
-                @click="selectJobRequisition(jobRequisition)"
-              >
-                <td>
-                  <div class="name-cell">
-                    <div class="avatar">
-                      {{ getJobInitials(jobRequisition) }}
+              <template v-for="jobRequisition in paginatedJobRequisitions" :key="jobRequisition.id">
+                <!-- Main Job Requisition Row -->
+                <tr 
+                  @click="toggleJobRequisitionExpansion(jobRequisition)"
+                  class="table-row"
+                  :class="{ 
+                    'selected': selectedJobRequisition?.id === jobRequisition.id,
+                    'expanded': expandedJobRequisitions.includes(jobRequisition.id)
+                  }"
+                >
+                  <td class="expand-cell">
+                    <div class="expand-cell">
+                      <button 
+                        @click.stop="toggleJobRequisitionExpansion(jobRequisition)"
+                        class="expand-btn"
+                        :class="{ 'expanded': expandedJobRequisitions.includes(jobRequisition.id) }"
+                        title="Toggle job requisition details"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
-                    <div class="name-info">
-                      <div class="name">{{ jobRequisition.job_title }}</div>
+                  </td>
+                  <td>
+                    <div class="name-cell">
+                      <div class="avatar">
+                        {{ getJobInitials(jobRequisition) }}
+                      </div>
+                      <div class="name-info">
+                        <div class="name">{{ jobRequisition.job_title }}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td>{{ getDepartmentName(jobRequisition) }}</td>
-                <td>{{ jobRequisition.location || 'N/A' }}</td>
-                <td>
-                  <span class="openings-badge">{{ jobRequisition.number_of_openings }}</span>
-                </td>
-                <td>
-                  <span class="status-badge" :class="jobRequisition.is_active ? 'active' : 'inactive'">
-                    {{ jobRequisition.is_active ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <button @click.stop="handleDeleteJobRequisition(jobRequisition)" class="action-btn delete" title="Delete Job Requisition">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td>{{ getDepartmentName(jobRequisition) }}</td>
+                  <td>{{ jobRequisition.location || 'N/A' }}</td>
+                  <td>
+                    <span class="openings-badge">{{ jobRequisition.number_of_openings }}</span>
+                  </td>
+                  <td>
+                    <span class="status-badge" :class="jobRequisition.is_active ? 'active' : 'inactive'">
+                      {{ jobRequisition.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button @click.stop="handleDeleteJobRequisition(jobRequisition)" class="action-btn delete" title="Delete Job Requisition">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Expandable Job Requisition Details Row -->
+                <tr v-if="expandedJobRequisitions.includes(jobRequisition.id)" class="expanded-row">
+                  <td colspan="7" class="expanded-content">
+                    <div class="job-requisition-details-container">
+                      <JobRequisitionContent 
+                        :jobRequisition="jobRequisition" 
+                        @refresh="fetchJobRequisitions"
+                        @edit="handleEditJobRequisition"
+                        :is-expanded="true"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -210,7 +238,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch, defineExpose } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import JobRequisitionContent from './JobRequisitionContent.vue'
 import { useToast } from 'vue-toastification'
@@ -228,6 +256,7 @@ export default {
     // Reactive data
     const jobRequisitions = ref([])
     const selectedJobRequisition = ref(null)
+    const expandedJobRequisitions = ref([])
     const loading = ref(false)
     const error = ref(null)
     const searchText = ref('')
@@ -418,6 +447,15 @@ export default {
       selectedJobRequisition.value = jobRequisition
     }
     
+    const toggleJobRequisitionExpansion = (jobRequisition) => {
+      const index = expandedJobRequisitions.value.indexOf(jobRequisition.id)
+      if (index > -1) {
+        expandedJobRequisitions.value.splice(index, 1)
+      } else {
+        expandedJobRequisitions.value.push(jobRequisition.id)
+      }
+    }
+    
     const handleAddJobRequisition = () => {
       emit('add-job-requisition')
     }
@@ -476,16 +514,12 @@ export default {
       fetchLookups()
       fetchJobRequisitions()
     })
-
-    // Expose methods to parent component
-    defineExpose({
-      fetchJobRequisitions
-    })
     
     return {
       // Data
       jobRequisitions,
       selectedJobRequisition,
+      expandedJobRequisitions,
       loading,
       error,
       searchText,
@@ -514,6 +548,7 @@ export default {
       sortBy,
       goToPage,
       selectJobRequisition,
+      toggleJobRequisitionExpansion,
       handleAddJobRequisition,
       handleEditJobRequisition,
       handleDeleteJobRequisition
@@ -772,6 +807,78 @@ export default {
 .table-row {
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f9fafb;
+}
+
+.table-row.selected {
+  background: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.table-row.expanded {
+  background: #f0f9ff;
+  border-bottom: 1px solid #0ea5e9;
+}
+
+.expand-column {
+  width: 60px;
+}
+
+.expand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.expand-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.expanded-row {
+  background: #f8fafc !important;
+}
+
+.expanded-row:hover {
+  background: #f8fafc !important;
+}
+
+.expanded-content {
+  padding: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.job-requisition-details-container {
+  background: #ffffff;
+  border-radius: 8px;
+  margin: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .table-row:hover {
