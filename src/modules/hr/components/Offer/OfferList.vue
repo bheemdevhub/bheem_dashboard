@@ -126,11 +126,6 @@
                 </td>
                 <td>
                   <div class="action-buttons">
-                    <button @click.stop="editOffer(offer)" class="action-btn edit" title="Edit Offer">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z"/>
-                      </svg>
-                    </button>
                     <button @click.stop="deleteOffer(offer)" class="action-btn delete" title="Delete Offer">
                       <svg viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>

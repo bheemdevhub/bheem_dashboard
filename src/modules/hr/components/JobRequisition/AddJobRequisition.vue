@@ -93,7 +93,7 @@
                 >
                   <option value="">Select Hiring Manager</option>
                   <option v-for="manager in hiringManagers" :key="manager.id" :value="manager.id">
-                    {{ manager.first_name }} {{ manager.last_name }}
+                    {{ manager.name }}
                   </option>
                 </select>
               </div>
@@ -148,13 +148,22 @@
               </div>
 
               <div class="form-group">
-                <label for="company_id">Company ID</label>
-                <input
+                <label for="company_id">Company <span class="required">*</span></label>
+                <select
                   id="company_id"
                   v-model="formData.company_id"
-                  type="text"
-                  placeholder="Enter company ID"
-                />
+                  :class="{ 'error': errors.company_id }"
+                >
+                  <option value="">Select Company</option>
+                  <option
+                    v-for="company in companies"
+                    :key="company.id"
+                    :value="company.id"
+                  >
+                    {{ company.company_name }}
+                  </option>
+                </select>
+                <span v-if="errors.company_id" class="error-message">{{ errors.company_id }}</span>
               </div>
             </div>
 
@@ -196,26 +205,37 @@
             </div>
 
             <div class="form-group full-width">
-              <label for="skills">Skills</label>
-              <div class="skills-input">
-                <input
-                  v-model="skillInput"
-                  type="text"
-                  placeholder="Add a skill and press Enter"
-                  @keyup.enter="addSkill"
-                />
-                <button type="button" @click="addSkill" class="add-skill-btn">Add</button>
+              <label for="skills">Skills <span class="required">*</span></label>
+              <div class="skills-section">
+                <div class="available-skills">
+                  <label>Available Skills:</label>
+                  <div class="skills-grid">
+                    <div
+                      v-for="skill in availableSkills"
+                      :key="skill.id"
+                      class="skill-option"
+                      :class="{ 'selected': formData.skills.includes(skill.id) }"
+                      @click="toggleSkill(skill.id)"
+                    >
+                      {{ skill.name }}
+                    </div>
+                  </div>
+                </div>
+                <div v-if="formData.skills.length > 0" class="selected-skills">
+                  <label>Selected Skills:</label>
+                  <div class="skills-list">
+                    <span
+                      v-for="skillId in formData.skills"
+                      :key="skillId"
+                      class="skill-tag"
+                    >
+                      {{ getSkillName(skillId) }}
+                      <button type="button" @click="removeSkill(skillId)" class="remove-skill">&times;</button>
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div v-if="formData.skills.length > 0" class="skills-list">
-                <span
-                  v-for="(skill, index) in formData.skills"
-                  :key="index"
-                  class="skill-tag"
-                >
-                  {{ skill }}
-                  <button type="button" @click="removeSkill(index)" class="remove-skill">&times;</button>
-                </span>
-              </div>
+              <span v-if="errors.skills" class="error-message">{{ errors.skills }}</span>
             </div>
           </div>
 
@@ -260,6 +280,7 @@
 <script>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { HRApiService } from '../../services/hrApiService';
+import { useToast } from 'vue-toastification';
 
 export default {
   name: 'AddJobRequisition',
@@ -275,6 +296,7 @@ export default {
   },
   emits: ['close', 'saved'],
   setup(props, { emit }) {
+    const toast = useToast();
     const currentStep = ref(1);
     const loading = ref(false);
     const skillInput = ref('');
@@ -294,34 +316,20 @@ export default {
       job_description: '',
       experience_required: '',
       is_active: true,
-      skills: []
+      skills: [] // Array of skill IDs
     });
 
     // Validation errors
     const errors = reactive({});
 
-    // Dropdown options
-    const departments = ref([
-      { id: 1, name: 'Engineering' },
-      { id: 2, name: 'Marketing' },
-      { id: 3, name: 'Sales' },
-      { id: 4, name: 'Human Resources' },
-      { id: 5, name: 'Finance' }
-    ]);
+    // Dropdown options from API
+    const departments = ref([]);
+    const jobTypes = ref([]);
+    const hiringManagers = ref([]);
 
-    const jobTypes = ref([
-      { id: 1, name: 'Software Engineer' },
-      { id: 2, name: 'Product Manager' },
-      { id: 3, name: 'Designer' },
-      { id: 4, name: 'Data Scientist' },
-      { id: 5, name: 'Marketing Manager' }
-    ]);
-
-    const hiringManagers = ref([
-      { id: 1, first_name: 'John', last_name: 'Doe' },
-      { id: 2, first_name: 'Jane', last_name: 'Smith' },
-      { id: 3, first_name: 'Mike', last_name: 'Johnson' }
-    ]);
+    // API data
+    const companies = ref([]);
+    const availableSkills = ref([]);
 
     // Form validation
     const validateStep = (step) => {
@@ -337,8 +345,13 @@ export default {
         }
       }
 
+      if (step === 2) {
+        if (!formData.company_id) stepErrors.company_id = 'Company is required';
+      }
+
       if (step === 3) {
         if (!formData.job_description) stepErrors.job_description = 'Job description is required';
+        if (!formData.skills || formData.skills.length === 0) stepErrors.skills = 'At least one skill is required';
       }
 
       Object.assign(errors, stepErrors);
@@ -350,8 +363,152 @@ export default {
     });
 
     const isFormValid = computed(() => {
-      return validateStep(1) && validateStep(3);
+      return validateStep(1) && validateStep(2) && validateStep(3);
     });
+
+    // API data fetching
+    const fetchCompanies = async () => {
+      try {
+        const result = await HRApiService.getCompanies();
+        if (result.success) {
+          // Handle the direct array response from companies API
+          const companiesData = result.data || [];
+          companies.value = companiesData.map(company => ({
+            id: company.id,
+            company_name: company.company_name,
+            name: company.company_name // For template compatibility
+          }));
+        } else {
+          console.error('Error fetching companies:', result.error);
+          toast.warning('Failed to load companies list. Some form fields may be limited.', {
+            timeout: 4000,
+            icon: '⚠️'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+        toast.warning('Failed to load companies list. Some form fields may be limited.', {
+          timeout: 4000,
+          icon: '⚠️'
+        });
+      }
+    };
+
+    const fetchEmployees = async () => {
+      try {
+        const result = await HRApiService.getEmployees();
+        if (result.success) {
+          // Handle the API response structure with items array
+          const employees = result.data.items || result.data || [];
+          hiringManagers.value = employees.map(employee => ({
+            id: employee.id,
+            first_name: employee.first_name,
+            last_name: employee.last_name,
+            name: `${employee.first_name} ${employee.last_name}`.trim()
+          }));
+        } else {
+          console.error('Error fetching employees:', result.error);
+          toast.warning('Failed to load hiring managers list. Some form fields may be limited.', {
+            timeout: 4000,
+            icon: '⚠️'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        toast.warning('Failed to load hiring managers list. Some form fields may be limited.', {
+          timeout: 4000,
+          icon: '⚠️'
+        });
+      }
+    };
+
+    const fetchDepartments = async () => {
+      try {
+        const result = await HRApiService.getLookups();
+        if (result.success) {
+          const departmentData = result.data.filter(lookup => lookup.type === 'department' && lookup.is_active);
+          departments.value = departmentData;
+          
+          if (departmentData.length === 0) {
+            toast.info('No departments available. Please contact administrator to set up departments.', {
+              timeout: 4000,
+              icon: 'ℹ️'
+            });
+          }
+        } else {
+          console.error('Error fetching departments:', result.error);
+          toast.warning('Failed to load departments list. Some form fields may be limited.', {
+            timeout: 4000,
+            icon: '⚠️'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        toast.warning('Failed to load departments list. Some form fields may be limited.', {
+          timeout: 4000,
+          icon: '⚠️'
+        });
+      }
+    };
+
+    const fetchJobTypes = async () => {
+      try {
+        const result = await HRApiService.getLookups();
+        if (result.success) {
+          const jobTypeData = result.data.filter(lookup => lookup.type === 'job_type' && lookup.is_active);
+          jobTypes.value = jobTypeData;
+          
+          if (jobTypeData.length === 0) {
+            toast.info('No job types available. Please contact administrator to set up job types.', {
+              timeout: 4000,
+              icon: 'ℹ️'
+            });
+          }
+        } else {
+          console.error('Error fetching job types:', result.error);
+          toast.warning('Failed to load job types list. Some form fields may be limited.', {
+            timeout: 4000,
+            icon: '⚠️'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching job types:', error);
+        toast.warning('Failed to load job types list. Some form fields may be limited.', {
+          timeout: 4000,
+          icon: '⚠️'
+        });
+      }
+    };
+
+    const fetchSkills = async () => {
+      try {
+        const result = await HRApiService.getLookups();
+        if (result.success) {
+          // Filter lookups by type = 'skill' (correct type)
+          const skillsData = result.data.filter(lookup => lookup.type === 'skill' && lookup.is_active);
+          availableSkills.value = skillsData;
+          
+          if (skillsData.length === 0) {
+            toast.info('No skills available. Please contact administrator to set up skills.', {
+              timeout: 4000,
+              icon: 'ℹ️'
+            });
+          }
+        } else {
+          console.error('Error fetching skills:', result.error);
+          toast.warning('Failed to load skills list. Some form fields may be limited.', {
+            timeout: 4000,
+            icon: '⚠️'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching skills:', error);
+        toast.warning('Failed to load skills list. Some form fields may be limited.', {
+          timeout: 4000,
+          icon: '⚠️'
+        });
+      }
+    };
 
     // Step navigation
     const nextStep = () => {
@@ -367,6 +524,28 @@ export default {
     };
 
     // Skills management
+    const toggleSkill = (skillId) => {
+      const index = formData.skills.indexOf(skillId);
+      if (index > -1) {
+        formData.skills.splice(index, 1);
+      } else {
+        formData.skills.push(skillId);
+      }
+    };
+
+    const removeSkill = (skillId) => {
+      const index = formData.skills.indexOf(skillId);
+      if (index > -1) {
+        formData.skills.splice(index, 1);
+      }
+    };
+
+    const getSkillName = (skillId) => {
+      const skill = availableSkills.value.find(s => s.id === skillId);
+      return skill ? skill.name : 'Unknown Skill';
+    };
+
+    // Legacy skills management (kept for backward compatibility)
     const addSkill = () => {
       const skill = skillInput.value.trim();
       if (skill && !formData.skills.includes(skill)) {
@@ -375,13 +554,13 @@ export default {
       }
     };
 
-    const removeSkill = (index) => {
-      formData.skills.splice(index, 1);
-    };
-
     // Form submission
     const handleSubmit = async () => {
       if (!isFormValid.value) {
+        toast.warning('Please fill in all required fields', {
+          timeout: 3000,
+          icon: '⚠️'
+        });
         return;
       }
 
@@ -390,10 +569,8 @@ export default {
       try {
         const submitData = { ...formData };
 
-        // Convert skills array to comma-separated string if needed
-        if (submitData.skills && Array.isArray(submitData.skills)) {
-          submitData.skills = submitData.skills.join(', ');
-        }
+        // Ensure skills array contains IDs for API submission
+        // Skills are already in the correct format (array of IDs)
 
         let result;
         if (props.isEdit && props.jobRequisition?.id) {
@@ -402,10 +579,39 @@ export default {
           result = await HRApiService.createJobRequisition(submitData);
         }
 
-        emit('saved', result);
-        emit('close');
+        if (result.success) {
+          const actionText = props.isEdit ? 'updated' : 'created';
+          toast.success(`Job requisition "${formData.job_title}" has been ${actionText} successfully!`, {
+            timeout: 4000,
+            icon: '✅'
+          });
+          emit('saved', result);
+          emit('close');
+        } else {
+          const errorMessage = result.error || 'Unknown error occurred';
+          const actionText = props.isEdit ? 'update' : 'create';
+          toast.error(`Failed to ${actionText} job requisition: ${errorMessage}`, {
+            timeout: 5000,
+            icon: '❌'
+          });
+        }
       } catch (error) {
         console.error('Error saving job requisition:', error);
+        const actionText = props.isEdit ? 'update' : 'create';
+        let errorMessage = 'Unknown error occurred';
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        toast.error(`Failed to ${actionText} job requisition: ${errorMessage}`, {
+          timeout: 5000,
+          icon: '❌'
+        });
       } finally {
         loading.value = false;
       }
@@ -421,8 +627,14 @@ export default {
       if (props.isEdit && props.jobRequisition) {
         Object.keys(formData).forEach(key => {
           if (props.jobRequisition[key] !== undefined) {
-            if (key === 'skills' && typeof props.jobRequisition[key] === 'string') {
-              formData[key] = props.jobRequisition[key].split(', ').filter(skill => skill.trim());
+            if (key === 'skills') {
+              // Handle skills array - could be IDs or names depending on API response
+              if (Array.isArray(props.jobRequisition[key])) {
+                formData[key] = props.jobRequisition[key];
+              } else if (typeof props.jobRequisition[key] === 'string') {
+                // If skills are stored as comma-separated string, convert to array
+                formData[key] = props.jobRequisition[key].split(',').map(s => s.trim()).filter(s => s);
+              }
             } else {
               formData[key] = props.jobRequisition[key];
             }
@@ -439,6 +651,11 @@ export default {
     }, { immediate: true });
 
     onMounted(() => {
+      fetchCompanies();
+      fetchSkills();
+      fetchEmployees();
+      fetchDepartments();
+      fetchJobTypes();
       initializeFormData();
     });
 
@@ -451,12 +668,16 @@ export default {
       departments,
       jobTypes,
       hiringManagers,
+      companies,
+      availableSkills,
       canProceedToNextStep,
       isFormValid,
       nextStep,
       previousStep,
-      addSkill,
+      toggleSkill,
       removeSkill,
+      getSkillName,
+      addSkill,
       handleSubmit,
       handleOverlayClick
     };
@@ -647,6 +868,65 @@ export default {
   font-size: 12px;
   margin-top: 5px;
   display: block;
+}
+
+.skills-section {
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 15px;
+  background-color: #f8f9fa;
+}
+
+.available-skills {
+  margin-bottom: 15px;
+}
+
+.available-skills label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #333;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.skill-option {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  font-size: 14px;
+}
+
+.skill-option:hover {
+  border-color: #007bff;
+  background-color: #e7f3ff;
+}
+
+.skill-option.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.selected-skills {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 15px;
+}
+
+.selected-skills label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #333;
 }
 
 .skills-input {

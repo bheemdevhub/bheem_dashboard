@@ -1,5 +1,5 @@
-import { API_ENDPOINTS } from './config.js'
-import { makeAuthenticatedRequest, handleApiResponse } from './client.js'
+import { API_ENDPOINTS } from '../config.js'
+import { makeAuthenticatedRequest, handleApiResponse } from '../client.js'
 
 /**
  * Company API Service

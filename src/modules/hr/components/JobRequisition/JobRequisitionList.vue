@@ -1,5 +1,5 @@
 <template>
-  <div class="job-requisition-widget">
+  <div class="interview-widget">
     <!-- Widget Header -->
     <div class="widget-header">
       <div class="widget-title-section">
@@ -42,6 +42,7 @@
         :jobRequisition="selectedJobRequisition" 
         @refresh="fetchJobRequisitions"
         @edit="handleEditJobRequisition"
+        @back="selectedJobRequisition = null"
       />
     </div>
 
@@ -113,19 +114,13 @@
                     <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
                   </svg>
                 </th>
-                <th class="sortable" @click="sortBy('requisition_date')">
-                  Requisition Date
-                  <svg v-if="sortField === 'requisition_date'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                  </svg>
-                </th>
                 <th class="sortable" @click="sortBy('is_active')">
                   Status
                   <svg v-if="sortField === 'is_active'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
                   </svg>
                 </th>
-                <th class="actions-column">Actions</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -133,16 +128,16 @@
                 v-for="jobRequisition in paginatedJobRequisitions" 
                 :key="jobRequisition.id"
                 class="table-row"
-                :class="{ selected: selectedJobRequisition?.id === jobRequisition.id }"
                 @click="selectJobRequisition(jobRequisition)"
               >
-                <td class="name-cell">
-                  <div class="avatar">
-                    {{ getJobInitials(jobRequisition) }}
-                  </div>
-                  <div>
-                    <div class="job-title">{{ jobRequisition.job_title }}</div>
-                    <div class="job-type">{{ getJobTypeName(jobRequisition) }}</div>
+                <td>
+                  <div class="name-cell">
+                    <div class="avatar">
+                      {{ getJobInitials(jobRequisition) }}
+                    </div>
+                    <div class="name-info">
+                      <div class="name">{{ jobRequisition.job_title }}</div>
+                    </div>
                   </div>
                 </td>
                 <td>{{ getDepartmentName(jobRequisition) }}</td>
@@ -150,21 +145,16 @@
                 <td>
                   <span class="openings-badge">{{ jobRequisition.number_of_openings }}</span>
                 </td>
-                <td>{{ formatDate(jobRequisition.requisition_date) }}</td>
                 <td>
                   <span class="status-badge" :class="jobRequisition.is_active ? 'active' : 'inactive'">
                     {{ jobRequisition.is_active ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
-                <td class="actions-column">
+                <td>
                   <div class="action-buttons">
-                    <button 
-                      @click="handleDeleteJobRequisition(jobRequisition)"
-                      class="action-btn delete-btn"
-                      title="Delete job requisition"
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12z"/>
+                    <button @click.stop="handleDeleteJobRequisition(jobRequisition)" class="action-btn delete" title="Delete Job Requisition">
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
                       </svg>
                     </button>
                   </div>
@@ -869,19 +859,19 @@ export default {
   justify-content: center;
 }
 
+.action-btn.delete {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.action-btn.delete:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .action-btn svg {
   width: 1rem;
   height: 1rem;
-}
-
-.delete-btn {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.delete-btn:hover {
-  background: #ef4444;
-  color: white;
 }
 
 .pagination-container {

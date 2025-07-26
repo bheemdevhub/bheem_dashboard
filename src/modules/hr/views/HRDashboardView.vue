@@ -218,28 +218,22 @@
                     </svg>
                   </div>
                   <div class="module-info">
-                    <h3 class="module-title">Onboarding Checklist</h3>
+                    <h3 class="module-title">Onboarding</h3>
                     <p class="module-description">Manage new employee onboarding process</p>
                   </div>
-                  <div class="module-actions">
-                    <button class="action-btn primary">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                      </svg>
-                      New Checklist
-                    </button>
+                  <div class="module-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ onboardingStats.total }}</span>
+                      <span class="stat-text">Total</span>
+                    </div>
                   </div>
                 </div>
                 <div class="module-content">
-                  <div class="coming-soon-content">
-                    <div class="coming-soon-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-6v6m0-6l7-7 7 7M9 11l7-7v6"></path>
-                      </svg>
-                    </div>
-                    <h4>Coming Soon</h4>
-                    <p>Onboarding checklist system coming in next update</p>
-                  </div>
+                  <OnboardingList 
+                    ref="onboardingListRef"
+                    @add-onboarding="handleAddOnboarding"
+                    @edit-onboarding="handleEditOnboarding" 
+                  />
                 </div>
               </div>
             </div>
@@ -299,6 +293,14 @@
       @success="handleAttendanceFormSuccess"
       @close="closeAttendanceModal"
     />
+
+    <!-- Add/Edit Onboarding Modal -->
+    <AddOnboarding 
+      :is-visible="showOnboardingModal"
+      :onboarding="editingOnboarding"
+      @success="handleOnboardingFormSuccess"
+      @close="closeOnboardingModal"
+    />
   </div>
 </template>
 
@@ -319,6 +321,8 @@ import JobRequisitionList from '../components/JobRequisition/JobRequisitionList.
 import AddJobRequisition from '../components/JobRequisition/AddJobRequisition.vue'
 import AttendanceWidget from '../components/Attendance/AttendanceWidget.vue'
 import AddAttendance from '../components/Attendance/AddAttendance.vue'
+import OnboardingList from '../components/Onboarding/OnboardingList.vue'
+import AddOnboarding from '../components/Onboarding/AddOnboarding.vue'
 import { HRApiService } from '../services/hrApiService'
 
 export default {
@@ -339,7 +343,9 @@ export default {
     JobRequisitionList,
     AddJobRequisition,
     AttendanceWidget,
-    AddAttendance
+    AddAttendance,
+    OnboardingList,
+    AddOnboarding
   },
   setup() {
     // Reactive data
@@ -371,6 +377,12 @@ export default {
       accepted: 0,
       pending: 0
     })
+
+    const onboardingStats = ref({
+      total: 0,
+      active: 0,
+      completed: 0
+    })
     
     // Modal state
     const showModal = ref(false)
@@ -382,6 +394,8 @@ export default {
     const editingInterview = ref(null)
     const showOfferModal = ref(false)
     const editingOffer = ref(null)
+    const showOnboardingModal = ref(false)
+    const editingOnboarding = ref(null)
     const showJobRequisitionModal = ref(false)
     const editingJobRequisition = ref(null)
     const showAttendanceModal = ref(false)
@@ -392,6 +406,7 @@ export default {
     const candidateListRef = ref(null)
     const interviewListRef = ref(null)
     const offerListRef = ref(null)
+    const onboardingListRef = ref(null)
     const jobRequisitionListRef = ref(null)
 
     // Methods
@@ -476,6 +491,35 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching offer stats:', error)
+      }
+    }
+
+    const fetchOnboardingStats = async () => {
+      try {
+        const result = await HRApiService.getOnboardings()
+        if (result.success) {
+          const onboardings = result.data || []
+          onboardingStats.value = {
+            total: onboardings.length,
+            active: onboardings.filter(o => o.is_active === true).length || 0,
+            completed: onboardings.filter(o => {
+              // Calculate overall progress and consider > 90% as completed
+              const allFields = [
+                'offer_letter_signed', 'id_proof_submitted', 'educational_documents',
+                'background_verification', 'bank_account_details', 'work_email_created',
+                'system_allocation', 'software_access_setup', 'welcome_kit_given',
+                'assigned_buddy', 'first_day_orientation', 'department_introduction',
+                'hr_policy_acknowledgement', 'training_plan_shared', 'probation_period_set',
+                'employee_id_created'
+              ]
+              const completed = allFields.filter(field => o[field]).length
+              const progress = Math.round((completed / allFields.length) * 100)
+              return progress >= 90
+            }).length || 0
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching onboarding stats:', error)
       }
     }
 
@@ -583,6 +627,32 @@ export default {
       }
     }
 
+    // Onboarding modal handlers
+    const handleAddOnboarding = () => {
+      editingOnboarding.value = null
+      showOnboardingModal.value = true
+    }
+
+    const handleEditOnboarding = (onboarding) => {
+      editingOnboarding.value = onboarding
+      showOnboardingModal.value = true
+    }
+
+    const closeOnboardingModal = () => {
+      showOnboardingModal.value = false
+      editingOnboarding.value = null
+    }
+
+    const handleOnboardingFormSuccess = () => {
+      closeOnboardingModal()
+      // Refresh stats after adding/editing onboarding
+      fetchOnboardingStats()
+      // Refresh onboarding list to show new onboarding without page refresh
+      if (onboardingListRef.value && onboardingListRef.value.fetchOnboardings) {
+        onboardingListRef.value.fetchOnboardings()
+      }
+    }
+
     // Job Requisition modal handlers
     const handleAddJobRequisition = () => {
       editingJobRequisition.value = null
@@ -637,6 +707,7 @@ export default {
       fetchCandidateStats()
       fetchInterviewStats()
       fetchOfferStats()
+      fetchOnboardingStats()
     })
 
     // Computed properties
@@ -649,6 +720,7 @@ export default {
       candidateStats,
       interviewStats,
       offerStats,
+      onboardingStats,
       showModal,
       editingEmployee,
       showCandidateModal,
@@ -657,6 +729,8 @@ export default {
       editingInterview,
       showOfferModal,
       editingOffer,
+      showOnboardingModal,
+      editingOnboarding,
       showJobRequisitionModal,
       editingJobRequisition,
       isEditingJobRequisition,
@@ -666,6 +740,7 @@ export default {
       candidateListRef,
       interviewListRef,
       offerListRef,
+      onboardingListRef,
       jobRequisitionListRef,
       handleSidebarToggle,
       fetchEmployeeStats,
@@ -673,6 +748,7 @@ export default {
       fetchCandidateStats,
       fetchInterviewStats,
       fetchOfferStats,
+      fetchOnboardingStats,
       handleAddEmployee,
       handleEditEmployee,
       closeModal,
@@ -689,6 +765,10 @@ export default {
       handleEditOffer,
       closeOfferModal,
       handleOfferFormSuccess,
+      handleAddOnboarding,
+      handleEditOnboarding,
+      closeOnboardingModal,
+      handleOnboardingFormSuccess,
       handleAddJobRequisition,
       handleEditJobRequisition,
       closeJobRequisitionModal,
@@ -805,61 +885,65 @@ export default {
   margin-top: 0.25rem;
 }
 
-/* Modules Section - 2 Tables Per Row */
+/* Modules Section - Single Widget Per Row */
 .modules-section {
   margin-bottom: 2rem;
 }
 
 .modules-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .module-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
 }
 
 .module-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
 }
 
 .module-card.primary-module {
   border: 2px solid #667eea;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .module-header {
-  padding: 1.5rem;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
   border-bottom: 1px solid #f3f4f6;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: #f8f9fa;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
 .module-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .module-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .module-info {
@@ -867,16 +951,18 @@ export default {
 }
 
 .module-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #1f2937;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.025em;
 }
 
 .module-description {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: #6b7280;
   margin: 0;
+  line-height: 1.5;
 }
 
 .module-stats {
@@ -889,23 +975,26 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-width: 80px;
 }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
   color: #3b82f6;
   line-height: 1;
 }
 
 .stat-text {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #6b7280;
-  margin-top: 0.125rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .module-actions {
@@ -945,7 +1034,7 @@ export default {
 .module-content {
   padding: 1.5rem;
   background: white;
-  min-height: 300px;
+  min-height: 400px;
 }
 
 /* Coming Soon Content */
@@ -984,8 +1073,8 @@ export default {
 /* Responsive Design */
 @media (max-width: 1024px) {
   .modules-grid {
-    grid-template-columns: 1fr;
     gap: 1.5rem;
+    max-width: 1000px;
   }
   
   .stats-container {
@@ -1009,7 +1098,13 @@ export default {
     gap: 1rem;
   }
   
+  .modules-grid {
+    gap: 1.5rem;
+    max-width: 100%;
+  }
+  
   .module-header {
+    padding: 1.5rem;
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
@@ -1023,6 +1118,10 @@ export default {
     flex: 1;
     justify-content: center;
   }
+  
+  .module-content {
+    min-height: 350px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1034,8 +1133,31 @@ export default {
     justify-content: center;
   }
   
+  .modules-grid {
+    gap: 1rem;
+  }
+  
+  .module-header {
+    padding: 1rem;
+  }
+  
   .module-content {
     padding: 1rem;
+    min-height: 300px;
+  }
+  
+  .module-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .module-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .module-title {
+    font-size: 1.25rem;
   }
   
   .coming-soon-content {

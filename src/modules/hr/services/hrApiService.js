@@ -384,10 +384,25 @@ export class HRApiService {
       }
     } catch (error) {
       console.error('Error creating job requisition:', error)
+      
+      // Better error message handling
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && error.detail) {
+        errorMessage = error.detail;
+      } else if (error && error.message) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      }
+      
       return {
         success: false,
         data: null,
-        error: error.message
+        error: errorMessage
       }
     }
   }
@@ -412,9 +427,24 @@ export class HRApiService {
       }
     } catch (error) {
       console.error('Error updating job requisition:', error)
+      
+      // Better error message handling
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && error.detail) {
+        errorMessage = error.detail;
+      } else if (error && error.message) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      }
+      
       return {
         success: false,
-        error: error.message
+        error: errorMessage
       }
     }
   }
@@ -986,10 +1016,10 @@ export class HRApiService {
     }
   }
 
-  // Onboarding Checklist endpoints (placeholder for future implementation)
-  static async getOnboardingChecklists() {
+  // Onboarding endpoints
+  static async getOnboardings() {
     try {
-      const response = await fetch(`${BASE_URL}/api/hr/onboarding-checklists/`, {
+      const response = await fetch(`${BASE_URL}/api/hr/onboarding/`, {
         method: 'GET',
         headers: getAuthHeaders()
       })
@@ -1004,11 +1034,160 @@ export class HRApiService {
         data: data
       }
     } catch (error) {
-      console.error('Error fetching onboarding checklists:', error)
+      console.error('Error fetching onboardings:', error)
       return {
         success: false,
         error: error.message,
-        data: { items: [], total_count: 0 } // Return empty data for now
+        data: []
+      }
+    }
+  }
+
+  static async getOnboardingById(id) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/onboarding/${id}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      return {
+        success: true,
+        data: data
+      }
+    } catch (error) {
+      console.error('Error fetching onboarding:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
+  static async createOnboarding(onboardingData) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/onboarding/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(onboardingData)
+      })
+      
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        
+        try {
+          const errorData = await response.json()
+          if (errorData.detail) {
+            errorMessage = errorData.detail
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          } else if (typeof errorData === 'object') {
+            errorMessage = JSON.stringify(errorData)
+          }
+        } catch (parseError) {
+          // Use the original HTTP error message if JSON parsing fails
+        }
+        
+        throw new Error(errorMessage)
+      }
+      
+      const data = await response.json()
+      return {
+        success: true,
+        data: data
+      }
+    } catch (error) {
+      console.error('Error creating onboarding:', error)
+      return {
+        success: false,
+        error: error.message || 'Unknown error occurred'
+      }
+    }
+  }
+
+  static async updateOnboarding(id, onboardingData) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/onboarding/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(onboardingData)
+      })
+      
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        
+        try {
+          const errorData = await response.json()
+          if (errorData.detail) {
+            errorMessage = errorData.detail
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          } else if (typeof errorData === 'object') {
+            errorMessage = JSON.stringify(errorData)
+          }
+        } catch (parseError) {
+          // Use the original HTTP error message if JSON parsing fails
+        }
+        
+        return {
+          success: false,
+          error: errorMessage
+        }
+      }
+      
+      const data = await response.json()
+      return {
+        success: true,
+        data: data
+      }
+    } catch (error) {
+      console.error('Error updating onboarding:', error)
+      
+      let errorMessage = 'Unknown error occurred'
+      
+      if (error && typeof error.message === 'string') {
+        errorMessage = error.message
+      } else if (error && typeof error === 'string') {
+        errorMessage = error
+      } else if (error && typeof error === 'object') {
+        try {
+          errorMessage = JSON.stringify(error)
+        } catch (e) {
+          errorMessage = 'Complex error occurred'
+        }
+      }
+      
+      return {
+        success: false,
+        error: errorMessage
+      }
+    }
+  }
+
+  static async deleteOnboarding(id) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hr/onboarding/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      return {
+        success: true,
+        data: null
+      }
+    } catch (error) {
+      console.error('Error deleting onboarding:', error)
+      return {
+        success: false,
+        error: error.message
       }
     }
   }
