@@ -19,7 +19,6 @@
             v-model="filterDate"
             type="date"
             class="date-input"
-            @change="fetchAttendanceData"
           />
         </div>
         
@@ -457,7 +456,7 @@ export default {
           })
         } else {
           // Generate mock data for demonstration
-          const mockAttendanceData = generateMockAttendanceData()
+          const mockAttendanceData = generateMockAttendanceData(filterDate.value)
           attendanceData.value = mockAttendanceData
           toast.info(`Showing ${attendanceData.value.length} sample attendance records (no real data found)`, {
             timeout: 3000,
@@ -476,7 +475,7 @@ export default {
       }
     }
     
-    const generateMockAttendanceData = () => {
+    const generateMockAttendanceData = (selectedDate) => {
       // This is temporary mock data - replace with real API call
       // Generate more records to demonstrate pagination
       const mockEmployees = employees.value.length > 0 ? employees.value : 
@@ -495,11 +494,11 @@ export default {
         const checkOutTimes = ['17:00:00', '17:30:00', '18:00:00', '18:30:00', '19:00:00']
         
         return {
-          id: `attendance-${employee.id}-${filterDate.value}`,
+          id: `attendance-${employee.id}-${selectedDate}`,
           employee_id: employee.id,
           employee_name: `${employee.first_name} ${employee.last_name}`.trim(),
           employee_code: employee.employee_code,
-          date: filterDate.value,
+          date: selectedDate,
           check_in: randomStatus === 'Absent' ? null : checkInTimes[Math.floor(Math.random() * checkInTimes.length)],
           check_out: randomStatus === 'Absent' ? null : checkOutTimes[Math.floor(Math.random() * checkOutTimes.length)],
           status: randomStatus
