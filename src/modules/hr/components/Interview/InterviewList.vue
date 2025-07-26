@@ -95,6 +95,11 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th class="expand-column">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
                 <th class="sortable" @click="sortBy('candidate_name')">
                   Candidate
                   <svg v-if="sortField === 'candidate_name'" class="sort-icon" :class="{ 'rotate-180': !sortAsc }" viewBox="0 0 20 20" fill="currentColor">
@@ -129,24 +134,42 @@
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="interview in paginatedInterviews" 
-                :key="interview.id" 
-                class="table-row"
-                @click="selectInterview(interview)"
-              >
-                <td>
-                  <div class="name-cell">
-                    <div class="avatar">
-                      {{ getCandidateInitials(interview) }}
+              <template v-for="interview in paginatedInterviews" :key="interview.id">
+                <!-- Main Interview Row -->
+                <tr 
+                  @click="toggleInterviewExpansion(interview)"
+                  class="table-row"
+                  :class="{ 
+                    'selected': selectedInterview?.id === interview.id,
+                    'expanded': expandedInterviews.includes(interview.id)
+                  }"
+                >
+                  <td class="expand-cell">
+                    <div class="expand-cell">
+                      <button 
+                        @click.stop="toggleInterviewExpansion(interview)"
+                        class="expand-btn"
+                        :class="{ 'expanded': expandedInterviews.includes(interview.id) }"
+                        title="Toggle interview details"
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
-                    <div class="name-info">
-                      <div class="name">{{ getCandidateName(interview) }}</div>
+                  </td>
+                  <td>
+                    <div class="name-cell">
+                      <div class="avatar">
+                        {{ getCandidateInitials(interview) }}
+                      </div>
+                      <div class="name-info">
+                        <div class="name">{{ getCandidateName(interview) }}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td>{{ getInterviewerName(interview) }}</td>
-                <td>{{ formatDateTime(interview.interview_date_time) }}</td>
+                  </td>
+                  <td>{{ getInterviewerName(interview) }}</td>
+                  <td>{{ formatDateTime(interview.interview_date_time) }}</td>
                 <td>
                   <span class="round-badge" :class="getRoundClass(interview.round_type)">
                     {{ interview.round_type }}
@@ -167,6 +190,21 @@
                   </div>
                 </td>
               </tr>
+              
+              <!-- Expandable Interview Details Row -->
+              <tr v-if="expandedInterviews.includes(interview.id)" class="expanded-row">
+                <td colspan="7" class="expanded-content">
+                  <div class="interview-details-container">
+                    <InterviewContent 
+                      :interview="interview" 
+                      @refresh="fetchInterviews"
+                      @edit="handleEditInterview"
+                      :is-expanded="true"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </template>
             </tbody>
           </table>
         </div>
@@ -239,6 +277,7 @@ export default {
     const error = ref(null)
     const searchText = ref('')
     const selectedInterview = ref(null)
+    const expandedInterviews = ref([])
     
     // Pagination
     const currentPage = ref(1)
@@ -530,6 +569,16 @@ export default {
       }
     }
 
+    // Toggle expansion
+    const toggleInterviewExpansion = (interview) => {
+      const index = expandedInterviews.value.indexOf(interview.id)
+      if (index > -1) {
+        expandedInterviews.value.splice(index, 1)
+      } else {
+        expandedInterviews.value.push(interview.id)
+      }
+    }
+
     // Initialize
     onMounted(async () => {
       await fetchCandidatesAndEmployees()
@@ -542,6 +591,7 @@ export default {
       error,
       searchText,
       selectedInterview,
+      expandedInterviews,
       
       // Computed
       totalCount,
@@ -568,7 +618,8 @@ export default {
       selectInterview,
       handleAddInterview,
       handleEditInterview,
-      handleDeleteInterview
+      handleDeleteInterview,
+      toggleInterviewExpansion
     }
   }
 }

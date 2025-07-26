@@ -1,5 +1,5 @@
 <template>
-  <div class="employee-content">
+  <div class="employee-content" :class="{ 'expanded-view': isExpanded }">
     <!-- Edit Button -->
     <div class="content-header">
       <button @click="handleEdit" class="edit-btn">
@@ -327,7 +327,16 @@
                           </tr>
                         </thead>
                         <tbody>
+                          <tr v-if="loadingAttendance" class="loading-row">
+                            <td colspan="6" class="loading-cell">
+                              <div class="loading-content">
+                                <div class="spinner"></div>
+                                <span>Loading attendance records...</span>
+                              </div>
+                            </td>
+                          </tr>
                           <tr 
+                            v-else
                             v-for="record in paginatedAttendance" 
                             :key="record.id"
                             class="attendance-row"
@@ -426,56 +435,94 @@
                   <div v-if="showAddAttendanceModal" class="modal-overlay" @click="closeAttendanceModal">
                     <div class="modal-content" @click.stop>
                       <div class="modal-header">
-                        <h3>{{ editingAttendance ? 'Edit' : 'Add' }} Attendance Record</h3>
+                        <div class="modal-title-section">
+                          <div class="modal-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3>{{ editingAttendance ? 'Edit' : 'Add' }} Attendance Record</h3>
+                            <p class="modal-subtitle">{{ editingAttendance ? 'Update attendance information' : 'Create new attendance record' }} for {{ getFullName(employee) }}</p>
+                          </div>
+                        </div>
                         <button @click="closeAttendanceModal" class="close-btn">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                           </svg>
                         </button>
                       </div>
                       <div class="modal-body">
-                        <div class="form-group">
-                          <label>Date</label>
-                          <input 
-                            v-model="attendanceForm.date" 
-                            type="date" 
-                            class="form-input"
-                            :max="today"
-                          />
-                        </div>
-                        <div class="form-row">
+                        <div class="form-section">
                           <div class="form-group">
-                            <label>Check In</label>
+                            <label class="form-label required">Date</label>
                             <input 
-                              v-model="attendanceForm.check_in" 
-                              type="time" 
+                              v-model="attendanceForm.date" 
+                              type="date" 
                               class="form-input"
+                              :max="today"
+                              :disabled="editingAttendance"
                             />
+                            <span class="form-help">{{ editingAttendance ? 'Date cannot be changed when editing' : 'Select the attendance date' }}</span>
                           </div>
+                          
                           <div class="form-group">
-                            <label>Check Out</label>
-                            <input 
-                              v-model="attendanceForm.check_out" 
-                              type="time" 
-                              class="form-input"
-                            />
+                            <label class="form-label required">Status</label>
+                            <select v-model="attendanceForm.status" class="form-input">
+                              <option value="Present">Present</option>
+                              <option value="Absent">Absent</option>
+                              <option value="Late">Late</option>
+                              <option value="Half Day">Half Day</option>
+                              <option value="Leave">On Leave</option>
+                              <option value="Work From Home">Work From Home</option>
+                            </select>
                           </div>
-                        </div>
-                        <div class="form-group">
-                          <label>Status</label>
-                          <select v-model="attendanceForm.status" class="form-input">
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                            <option value="Late">Late</option>
-                            <option value="Half Day">Half Day</option>
-                          </select>
+                          
+                          <div v-if="attendanceForm.status !== 'Absent'" class="time-inputs">
+                            <div class="form-row">
+                              <div class="form-group">
+                                <label class="form-label required">Check In Time</label>
+                                <input 
+                                  v-model="attendanceForm.check_in" 
+                                  type="time" 
+                                  class="form-input"
+                                />
+                              </div>
+                              <div class="form-group">
+                                <label class="form-label">Check Out Time</label>
+                                <input 
+                                  v-model="attendanceForm.check_out" 
+                                  type="time" 
+                                  class="form-input"
+                                  :min="attendanceForm.check_in"
+                                />
+                              </div>
+                            </div>
+                            
+                            <!-- Hours Display -->
+                            <div v-if="attendanceForm.check_in && attendanceForm.check_out" class="hours-display">
+                              <div class="hours-info">
+                                <svg viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Total Hours: <strong>{{ calculateHours(attendanceForm.check_in, attendanceForm.check_out) }}</strong></span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div class="modal-footer">
                         <button @click="closeAttendanceModal" class="btn secondary">Cancel</button>
                         <button @click="saveAttendanceRecord" class="btn primary" :disabled="savingAttendance">
-                          {{ savingAttendance ? 'Saving...' : 'Save' }}
+                          <svg v-if="savingAttendance" class="btn-icon spin" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.25"/>
+                            <path fill="currentColor" d="M4 12a8 8 0 018-8v2a6 6 0 100 12v2a8 8 0 01-8-8z"/>
+                          </svg>
+                          <svg v-else class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          </svg>
+                          {{ savingAttendance ? 'Saving...' : (editingAttendance ? 'Update Record' : 'Add Record') }}
                         </button>
                       </div>
                     </div>
@@ -556,6 +603,7 @@
 <script>
 import { ref, reactive, onMounted, nextTick, computed, watch } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
+import { AttendanceApiService } from '../../services/attendanceApiService'
 import { useToast } from 'vue-toastification'
 import Swal from 'sweetalert2'
 
@@ -565,6 +613,10 @@ export default {
     employee: {
       type: Object,
       required: true
+    },
+    isExpanded: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['refresh', 'edit'],
@@ -969,17 +1021,44 @@ export default {
       attendanceError.value = null
       
       try {
-        const result = await HRApiService.getEmployeeAttendance(props.employee.id)
+        console.log('Fetching attendance for employee ID:', props.employee.id)
+        const result = await AttendanceApiService.getEmployeeAttendance(props.employee.id)
+        console.log('Attendance API result:', result)
+        
         if (result.success) {
-          // Sort by date descending (newest first)
-          attendanceRecords.value = result.data.sort((a, b) => new Date(b.date) - new Date(a.date))
+          // Handle paginated response format
+          let attendanceData = []
           
-          if (result.data.length > 0) {
-            toast.success(`Loaded ${result.data.length} attendance records`, {
+          if (Array.isArray(result.data)) {
+            // Data is directly an array
+            attendanceData = result.data
+          } else if (result.data && Array.isArray(result.data.records)) {
+            // Paginated format with records array
+            attendanceData = result.data.records
+          } else if (result.data && Array.isArray(result.data.results)) {
+            // Django REST framework pagination format
+            attendanceData = result.data.results
+          } else if (result.data && Array.isArray(result.data.data)) {
+            // Nested data format
+            attendanceData = result.data.data
+          } else {
+            console.warn('Unexpected data format:', result.data)
+            attendanceData = []
+          }
+          
+          console.log('Extracted attendance data:', attendanceData)
+          console.log('Data count:', attendanceData.length)
+          
+          // Sort by date descending (newest first)
+          if (attendanceData.length > 0) {
+            attendanceRecords.value = attendanceData.sort((a, b) => new Date(b.date) - new Date(a.date))
+            
+            toast.success(`Loaded ${attendanceData.length} attendance records`, {
               timeout: 2000,
               icon: '📋'
             })
           } else {
+            attendanceRecords.value = []
             toast.info('No attendance records found for this employee', {
               timeout: 3000,
               icon: 'ℹ️'
@@ -987,6 +1066,7 @@ export default {
           }
         } else {
           attendanceError.value = result.error || 'Failed to fetch attendance records'
+          attendanceRecords.value = []
           toast.error(`Failed to load attendance: ${result.error}`, {
             timeout: 5000,
             icon: '❌'
@@ -995,6 +1075,7 @@ export default {
       } catch (error) {
         console.error('Error fetching attendance:', error)
         attendanceError.value = 'An unexpected error occurred while loading attendance data'
+        attendanceRecords.value = []
         toast.error('Failed to load attendance records', {
           timeout: 5000,
           icon: '❌'
@@ -1073,7 +1154,12 @@ export default {
       
       if (result.isConfirmed) {
         try {
-          const deleteResult = await HRApiService.deleteAttendanceRecord(record.id)
+          // Use the new endpoint with employee_id and date
+          const deleteResult = await AttendanceApiService.deleteAttendanceByEmployeeAndDate(
+            props.employee.id, 
+            record.date
+          )
+          
           if (deleteResult.success) {
             toast.success('Attendance record deleted successfully!', {
               timeout: 3000,
@@ -1081,14 +1167,33 @@ export default {
             })
             fetchAttendanceRecords() // Refresh the list
           } else {
-            toast.error(`Failed to delete record: ${deleteResult.error}`, {
+            // Enhanced error handling
+            let errorMessage = deleteResult.error || 'Failed to delete attendance record'
+            
+            // Handle specific error cases
+            if (deleteResult.status === 404) {
+              errorMessage = 'Attendance record not found'
+            } else if (deleteResult.status === 403) {
+              errorMessage = 'You do not have permission to delete this record'
+            }
+            
+            toast.error(errorMessage, {
               timeout: 5000,
               icon: '❌'
             })
           }
         } catch (error) {
           console.error('Error deleting attendance record:', error)
-          toast.error('An unexpected error occurred while deleting the record', {
+          
+          let errorMessage = 'An unexpected error occurred while deleting the record'
+          
+          if (error.response?.data?.message) {
+            errorMessage = error.response.data.message
+          } else if (error.message) {
+            errorMessage = error.message
+          }
+          
+          toast.error(errorMessage, {
             timeout: 5000,
             icon: '❌'
           })
@@ -1106,8 +1211,35 @@ export default {
     }
     
     const saveAttendanceRecord = async () => {
+      // Enhanced validation
       if (!attendanceForm.date) {
         toast.warning('Please select a date', { timeout: 3000, icon: '⚠️' })
+        return
+      }
+
+      if (!attendanceForm.check_in) {
+        toast.warning('Please enter check-in time', { timeout: 3000, icon: '⚠️' })
+        return
+      }
+
+      // Validate that check-out is after check-in if both are provided
+      if (attendanceForm.check_in && attendanceForm.check_out) {
+        const checkIn = new Date(`2000-01-01T${attendanceForm.check_in}`)
+        const checkOut = new Date(`2000-01-01T${attendanceForm.check_out}`)
+        
+        if (checkOut <= checkIn) {
+          toast.warning('Check-out time must be after check-in time', { timeout: 3000, icon: '⚠️' })
+          return
+        }
+      }
+
+      // Validate future dates
+      const selectedDate = new Date(attendanceForm.date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      if (selectedDate > today) {
+        toast.warning('Cannot add attendance for future dates', { timeout: 3000, icon: '⚠️' })
         return
       }
       
@@ -1124,9 +1256,15 @@ export default {
         
         let result
         if (editingAttendance.value) {
-          result = await HRApiService.updateAttendanceRecord(editingAttendance.value.id, attendanceData)
+          // Use the new endpoint for updates
+          result = await AttendanceApiService.updateAttendanceByEmployeeAndDate(
+            props.employee.id, 
+            attendanceForm.date, 
+            attendanceData
+          )
         } else {
-          result = await HRApiService.createAttendanceRecord(attendanceData)
+          // Use existing create endpoint
+          result = await AttendanceApiService.createAttendanceRecord(attendanceData)
         }
         
         if (result.success) {
@@ -1138,14 +1276,35 @@ export default {
           closeAttendanceModal()
           fetchAttendanceRecords() // Refresh the list
         } else {
-          toast.error(`Failed to save record: ${result.error}`, {
+          // Enhanced error handling
+          let errorMessage = result.error || 'Failed to save attendance record'
+          
+          // Handle specific error cases
+          if (result.status === 409) {
+            errorMessage = 'Attendance record already exists for this date'
+          } else if (result.status === 404) {
+            errorMessage = 'Employee not found'
+          } else if (result.status === 400) {
+            errorMessage = 'Invalid attendance data provided'
+          }
+          
+          toast.error(errorMessage, {
             timeout: 5000,
             icon: '❌'
           })
         }
       } catch (error) {
         console.error('Error saving attendance record:', error)
-        toast.error('An unexpected error occurred while saving the record', {
+        
+        let errorMessage = 'An unexpected error occurred while saving the record'
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        toast.error(errorMessage, {
           timeout: 5000,
           icon: '❌'
         })
@@ -1898,10 +2057,17 @@ export default {
 
 .action-icon.delete {
   color: #ef4444;
+  position: relative;
 }
 
 .action-icon.delete:hover {
   background: #fee2e2;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.action-icon.delete:active {
+  transform: scale(0.95);
 }
 
 .attendance-empty-state {
@@ -2238,6 +2404,345 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0;
+  padding-bottom: 1rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: none;
+  border-radius: 0.375rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.close-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.btn.secondary {
+  background: white;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.btn.secondary:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.success-message {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Modal Enhancements */
+.modal-title-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.modal-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 4px 0 0 0;
+  font-weight: 400;
+}
+
+.form-section {
+  padding: 8px 0;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.form-help {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  display: block;
+}
+
+.time-inputs {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fafb;
+  margin-top: 8px;
+}
+
+.hours-display {
+  margin-top: 16px;
+  padding: 12px;
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+}
+
+.hours-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #047857;
+  font-size: 14px;
+}
+
+.hours-info svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-icon.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Expanded View Styles */
+.employee-content.expanded-view {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.employee-content.expanded-view .content-header {
+  padding: 16px 20px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 8px 8px 0 0;
+}
+
+.employee-content.expanded-view .employee-table {
+  padding: 0;
+}
+
+.employee-content.expanded-view .info-table {
+  margin: 0;
+}
+
+.employee-content.expanded-view .info-cell {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.employee-content.expanded-view .tabs-container {
+  border-radius: 0 0 8px 8px;
+}
+
+.employee-content.expanded-view .tabs-header {
+  background: #f1f5f9;
+  padding: 0 20px;
+}
+
+.employee-content.expanded-view .tab-content {
+  padding: 20px;
+}
+
+/* Mobile responsive for expanded view */
+@media (max-width: 768px) {
+  .employee-content.expanded-view .content-header,
+  .employee-content.expanded-view .info-cell,
+  .employee-content.expanded-view .tab-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .employee-content.expanded-view .tabs-header {
+    padding: 0 16px;
   }
 }
 </style>

@@ -35,15 +35,6 @@
       </div>
     </div>
 
-    <!-- Employee Content Display -->
-    <div v-if="selectedEmployee" class="employee-content">
-      <EmployeeContent 
-        :employee="selectedEmployee" 
-        @refresh="fetchEmployees"
-        @edit="handleEditEmployee"
-      />
-    </div>
-
     <!-- Widget Content -->
     <div class="widget-content">
       <!-- Loading State -->
@@ -116,39 +107,71 @@
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="employee in paginatedEmployees" 
-                :key="employee.id"
-                @click="selectEmployee(employee)"
-                class="table-row"
-                :class="{ 'selected': selectedEmployee?.id === employee.id }"
-              >
-                <td class="employee-code">{{ employee.employee_code || 'N/A' }}</td>
-                <td class="employee-name">
-                  <div class="name-cell">
-                    <div class="avatar">
-                      <span>{{ getInitials(employee) }}</span>
+              <template v-for="employee in paginatedEmployees" :key="employee.id">
+                <!-- Main Employee Row -->
+                <tr 
+                  @click="toggleEmployeeExpansion(employee)"
+                  class="table-row"
+                  :class="{ 
+                    'selected': selectedEmployee?.id === employee.id,
+                    'expanded': expandedEmployees.includes(employee.id)
+                  }"
+                >
+                  <td class="employee-code">
+                    <div class="expand-cell">
+                      <button class="expand-btn" :class="{ 'expanded': expandedEmployees.includes(employee.id) }">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                      {{ employee.employee_code || 'N/A' }}
                     </div>
-                    <span>{{ getFullName(employee) }}</span>
-                  </div>
-                </td>
-                <td class="employment-type">{{ employee.employment_type || 'N/A' }}</td>
-                <td class="hire-date">{{ formatDate(employee.hire_date) }}</td>
-                <td class="status">
-                  <span class="status-badge" :class="employee.is_active ? 'active' : 'inactive'">
-                    {{ employee.is_active ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td class="actions" @click.stop>
-                  <div class="action-buttons">
-                    <button @click="handleDeleteEmployee(employee)" class="action-btn delete-btn" title="Delete Employee">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 2a1 1 0 10-2 0v6a1 1 0 102 0V7zm3 0a1 1 0 10-2 0v6a1 1 0 102 0V7zm3 0a1 1 0 10-2 0v6a1 1 0 102 0V7z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td class="employee-name">
+                    <div class="name-cell">
+                      <div class="avatar">
+                        <span>{{ getInitials(employee) }}</span>
+                      </div>
+                      <span>{{ getFullName(employee) }}</span>
+                    </div>
+                  </td>
+                  <td class="employment-type">{{ employee.employment_type || 'N/A' }}</td>
+                  <td class="hire-date">{{ formatDate(employee.hire_date) }}</td>
+                  <td class="status">
+                    <span class="status-badge" :class="employee.is_active ? 'active' : 'inactive'">
+                      {{ employee.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="actions" @click.stop>
+                    <div class="action-buttons">
+                      <button @click="handleEditEmployee(employee)" class="action-btn edit-btn" title="Edit Employee">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z"/>
+                        </svg>
+                      </button>
+                      <button @click="handleDeleteEmployee(employee)" class="action-btn delete-btn" title="Delete Employee">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 2a1 1 0 10-2 0v6a1 1 0 102 0V7zm3 0a1 1 0 10-2 0v6a1 1 0 102 0V7zm3 0a1 1 0 10-2 0v6a1 1 0 102 0V7z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Expandable Employee Details Row -->
+                <tr v-if="expandedEmployees.includes(employee.id)" class="expanded-row">
+                  <td colspan="6" class="expanded-content">
+                    <div class="employee-details-container">
+                      <EmployeeContent 
+                        :employee="employee" 
+                        @refresh="fetchEmployees"
+                        @edit="handleEditEmployee"
+                        :is-expanded="true"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -198,7 +221,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch, defineExpose } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
 import EmployeeContent from './EmployeeContent.vue'
 import { useToast } from 'vue-toastification'
@@ -216,6 +239,7 @@ export default {
     // Reactive data
     const employees = ref([])
     const selectedEmployee = ref(null)
+    const expandedEmployees = ref([]) // Track which employees are expanded
     const loading = ref(false)
     const error = ref(null)
     const searchText = ref('')
@@ -384,6 +408,21 @@ export default {
       selectedEmployee.value = employee
     }
     
+    const toggleEmployeeExpansion = (employee) => {
+      const index = expandedEmployees.value.indexOf(employee.id)
+      if (index > -1) {
+        // Employee is expanded, collapse it
+        expandedEmployees.value.splice(index, 1)
+        if (selectedEmployee.value?.id === employee.id) {
+          selectedEmployee.value = null
+        }
+      } else {
+        // Employee is not expanded, expand it
+        expandedEmployees.value.push(employee.id)
+        selectedEmployee.value = employee
+      }
+    }
+    
     const handleAddEmployee = () => {
       emit('add-employee')
     }
@@ -442,16 +481,12 @@ export default {
     onMounted(() => {
       fetchEmployees()
     })
-
-    // Expose methods to parent component
-    defineExpose({
-      fetchEmployees
-    })
     
     return {
       // Data
       employees,
       selectedEmployee,
+      expandedEmployees,
       loading,
       error,
       searchText,
@@ -477,6 +512,7 @@ export default {
       sortBy,
       goToPage,
       selectEmployee,
+      toggleEmployeeExpansion,
       handleAddEmployee,
       handleEditEmployee,
       handleDeleteEmployee
@@ -744,6 +780,68 @@ export default {
 .table-row.selected {
   background: #eff6ff;
   border-color: #dbeafe;
+}
+
+.table-row.expanded {
+  background: #f0f9ff;
+  border-bottom: 1px solid #0ea5e9;
+}
+
+.expand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.expand-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.expanded svg {
+  transform: rotate(90deg);
+}
+
+.expanded-row {
+  background: #fafbff;
+  border-bottom: 1px solid #e0e7ff;
+}
+
+.expanded-row:hover {
+  background: #fafbff;
+}
+
+.expanded-content {
+  padding: 0;
+  border: none;
+}
+
+.employee-details-container {
+  background: #ffffff;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  margin: 8px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .name-cell {

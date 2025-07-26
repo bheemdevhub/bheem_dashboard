@@ -222,38 +222,61 @@
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination-container">
           <div class="pagination-info">
-            Showing {{ startIndex + 1 }}-{{ endIndex }} of {{ filteredAttendanceData.length }} records
+            Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ filteredAttendanceData.length }} records
           </div>
           <div class="pagination-controls">
+            <button 
+              @click="goToPage(1)" 
+              :disabled="currentPage === 1" 
+              class="pagination-btn"
+              title="First Page"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+              </svg>
+            </button>
             <button 
               @click="goToPage(currentPage - 1)" 
               :disabled="currentPage === 1"
               class="pagination-btn"
+              title="Previous Page"
             >
               <svg viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
             </button>
             
-            <span class="page-numbers">
+            <div class="page-numbers">
               <button 
                 v-for="page in visiblePages" 
                 :key="page"
                 @click="goToPage(page)"
-                class="page-btn"
-                :class="{ 'active': page === currentPage }"
+                :class="['page-btn', { active: page === currentPage }]"
+                :disabled="page === '...'"
               >
                 {{ page }}
               </button>
-            </span>
+            </div>
             
             <button 
               @click="goToPage(currentPage + 1)" 
               :disabled="currentPage === totalPages"
               class="pagination-btn"
+              title="Next Page"
             >
               <svg viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button 
+              @click="goToPage(totalPages)" 
+              :disabled="currentPage === totalPages" 
+              class="pagination-btn"
+              title="Last Page"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
               </svg>
             </button>
           </div>
@@ -455,7 +478,16 @@ export default {
     
     const generateMockAttendanceData = () => {
       // This is temporary mock data - replace with real API call
-      return employees.value.slice(0, 15).map((employee) => {
+      // Generate more records to demonstrate pagination
+      const mockEmployees = employees.value.length > 0 ? employees.value : 
+        Array.from({ length: 25 }, (_, index) => ({
+          id: index + 1,
+          first_name: `Employee`,
+          last_name: `${index + 1}`,
+          employee_code: `EMP${String(index + 1).padStart(3, '0')}`
+        }))
+      
+      return mockEmployees.slice(0, 25).map((employee) => {
         const statuses = ['Present', 'Absent', 'Late', 'Half Day']
         const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]
         
@@ -523,7 +555,7 @@ export default {
     }
     
     const goToPage = (page) => {
-      if (page >= 1 && page <= totalPages.value) {
+      if (page !== '...' && page >= 1 && page <= totalPages.value) {
         currentPage.value = page
       }
     }

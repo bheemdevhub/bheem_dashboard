@@ -75,6 +75,11 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th class="expand-column">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </th>
                 <th>Candidate</th>
                 <th>Company</th>
                 <th>CTC</th>
@@ -87,69 +92,90 @@
               </tr>
             </thead>
             <tbody>
-              <tr 
-                v-for="offer in filteredOffers" 
-                :key="offer.id"
-                class="table-row"
-                @click="selectOffer(offer)"
-              >
-                <td>
-                  <div class="name-cell">
-                    <div class="avatar">
-                      {{ getCandidateInitials(offer) }}
-                    </div>
-                    <div class="name-info">
-                      <div class="name">{{ getCandidateName(offer) }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{{ getCompanyName(offer) }}</td>
-                <td>
-                  <div class="ctc-amount">₹{{ formatCurrency(offer.offered_ctc) }}</div>
-                </td>
-                <td>{{ formatDate(offer.offer_date) }}</td>
-                <td>{{ formatDate(offer.joining_date) }}</td>
-                <td>
-                  <span class="status-badge" :class="getOfferStatusClass(offer.offer_status)">
-                    {{ offer.offer_status }}
-                  </span>
-                </td>
-                <td>
-                  <span class="status-badge" :class="getBackgroundCheckClass(offer.background_check_status)">
-                    {{ offer.background_check_status }}
-                  </span>
-                </td>
-                <td>
-                  <span class="docs-badge" :class="offer.documents_submitted ? 'submitted' : 'pending'">
-                    {{ offer.documents_submitted ? 'Submitted' : 'Pending' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <button @click.stop="deleteOffer(offer)" class="action-btn delete" title="Delete Offer">
+              <template v-for="offer in filteredOffers" :key="offer.id">
+                <!-- Main Offer Row -->
+                <tr 
+                  @click="toggleOfferExpansion(offer)"
+                  class="table-row"
+                  :class="{ 
+                    'selected': selectedOffer?.id === offer.id,
+                    'expanded': expandedOffers.includes(offer.id)
+                  }"
+                >
+                  <td class="expand-cell">
+                    <button 
+                      @click.stop="toggleOfferExpansion(offer)"
+                      class="expand-btn"
+                      :class="{ 'expanded': expandedOffers.includes(offer.id) }"
+                      title="Toggle offer details"
+                    >
                       <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V7a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                       </svg>
                     </button>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td>
+                    <div class="name-cell">
+                      <div class="avatar">
+                        {{ getCandidateInitials(offer) }}
+                      </div>
+                      <div class="name-info">
+                        <div class="name">{{ getCandidateName(offer) }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ getCompanyName(offer) }}</td>
+                  <td>
+                    <div class="ctc-amount">₹{{ formatCurrency(offer.offered_ctc) }}</div>
+                  </td>
+                  <td>{{ formatDate(offer.offer_date) }}</td>
+                  <td>{{ formatDate(offer.joining_date) }}</td>
+                  <td>
+                    <span class="status-badge" :class="getOfferStatusClass(offer.offer_status)">
+                      {{ offer.offer_status }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-badge" :class="getBackgroundCheckClass(offer.background_check_status)">
+                      {{ offer.background_check_status }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="docs-badge" :class="offer.documents_submitted ? 'submitted' : 'pending'">
+                      {{ offer.documents_submitted ? 'Submitted' : 'Pending' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button @click.stop="deleteOffer(offer)" class="action-btn delete" title="Delete Offer">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V7a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Expandable Offer Details Row -->
+                <tr v-if="expandedOffers.includes(offer.id)" class="expanded-row">
+                  <td colspan="10" class="expanded-content">
+                    <div class="offer-details-container">
+                      <OfferContent 
+                        :offer="offer" 
+                        @refresh="fetchOffers"
+                        @edit="editOffer"
+                        :is-expanded="true"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
       </div>
     </div>
-    
-    <!-- Offer Content Component -->
-    <OfferContent 
-      v-if="selectedOffer"
-      :offer="selectedOffer"
-      @back="selectedOffer = null"
-      @edit="editOffer"
-      @refresh="fetchOffers"
-      class="interview-content"
-    />
   </div>
 </template>
 
@@ -178,6 +204,7 @@ export default {
     const searchText = ref('')
     const selectedOffer = ref(null)
     const editingOffer = ref(null)
+    const expandedOffers = ref([])
 
     // Computed properties
     const totalCount = computed(() => offers.value.length)
@@ -389,6 +416,15 @@ export default {
       }
     }
 
+    const toggleOfferExpansion = (offer) => {
+      const index = expandedOffers.value.indexOf(offer.id)
+      if (index > -1) {
+        expandedOffers.value.splice(index, 1)
+      } else {
+        expandedOffers.value.push(offer.id)
+      }
+    }
+
     // Lifecycle
     onMounted(async () => {
       await fetchOffers()
@@ -403,6 +439,7 @@ export default {
       searchText,
       selectedOffer,
       editingOffer,
+      expandedOffers,
       totalCount,
       filteredOffers,
       fetchOffers,
@@ -418,7 +455,8 @@ export default {
       formatDate,
       formatCurrency,
       getOfferStatusClass,
-      getBackgroundCheckClass
+      getBackgroundCheckClass,
+      toggleOfferExpansion
     }
   }
 }
@@ -943,5 +981,69 @@ export default {
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Expandable Rows */
+.expand-column {
+  width: 60px;
+}
+
+.expand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.expand-btn svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.table-row.expanded {
+  background: #f0f9ff;
+  border-bottom: 1px solid #0ea5e9;
+}
+
+.expanded-row {
+  background: #f8fafc !important;
+}
+
+.expanded-row:hover {
+  background: #f8fafc !important;
+}
+
+.expanded-content {
+  padding: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.offer-details-container {
+  background: #ffffff;
+  border-radius: 8px;
+  margin: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 </style>
