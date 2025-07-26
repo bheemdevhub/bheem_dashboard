@@ -374,6 +374,146 @@
             </div>
           </div>
 
+          <!-- Bank Account Information Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 7L18.36 6.64C17.15 5.88 15.8 5.5 14.5 5.5C13.2 5.5 11.85 5.88 10.64 6.64L10 7L9.36 6.64C8.15 5.88 6.8 5.5 5.5 5.5C4.2 5.5 2.85 5.88 1.64 6.64L1 7V18.5C1 18.78 1.22 19 1.5 19C1.6 19 1.69 18.96 1.78 18.92L2.36 18.64C3.15 18.22 4.08 18 5 18C6.05 18 7.05 18.28 7.95 18.78L10 20L12.05 18.78C12.95 18.28 13.95 18 15 18C15.92 18 16.85 18.22 17.64 18.64L18.22 18.92C18.31 18.96 18.4 19 18.5 19C18.78 19 19 18.78 19 18.5V7Z"/>
+              </svg>
+              <h3>Bank Account Information</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Account Name</label>
+                <input 
+                  v-model="bankAccountData.account_name" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter account holder name"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Account Number</label>
+                <input 
+                  v-model="bankAccountData.account_number" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter account number"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Bank Name</label>
+                <input 
+                  v-model="bankAccountData.bank_name" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter bank name"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Bank Branch</label>
+                <input 
+                  v-model="bankAccountData.bank_branch" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter bank branch"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Routing Number</label>
+                <input 
+                  v-model="bankAccountData.routing_number" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter routing number"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">SWIFT Code</label>
+                <input 
+                  v-model="bankAccountData.swift_code" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter SWIFT code"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">IBAN</label>
+                <input 
+                  v-model="bankAccountData.iban" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Enter IBAN"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Currency</label>
+                <select 
+                  v-model="bankAccountData.currency" 
+                  class="form-input"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="INR">INR</option>
+                  <option value="CAD">CAD</option>
+                  <option value="AUD">AUD</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Current Balance</label>
+                <input 
+                  v-model="bankAccountData.current_balance" 
+                  type="number" 
+                  step="0.01" 
+                  class="form-input"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Available Balance</label>
+                <input 
+                  v-model="bankAccountData.available_balance" 
+                  type="number" 
+                  step="0.01" 
+                  class="form-input"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input 
+                    v-model="bankAccountData.is_primary" 
+                    type="checkbox" 
+                    class="form-checkbox"
+                  />
+                  Primary Account
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <input 
+                    v-model="bankAccountData.is_default" 
+                    type="checkbox" 
+                    class="form-checkbox"
+                  />
+                  Default Account
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- Passport Information Section -->
           <div class="form-section">
             <div class="section-header">
@@ -476,6 +616,20 @@
             </div>
             <div class="form-grid">
               <div class="form-group">
+                <label class="form-label">Applied Position</label>
+                <select 
+                  v-model="candidateData.applied_position_id" 
+                  class="form-input"
+                  :disabled="isLoadingJobRequisitions"
+                >
+                  <option value="">{{ isLoadingJobRequisitions ? 'Loading positions...' : 'Select Job Position' }}</option>
+                  <option v-for="job in jobRequisitions" :key="job.id" :value="job.id">
+                    {{ job.job_title }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
                 <label class="form-label required">Application Date</label>
                 <input 
                   v-model="candidateData.application_date" 
@@ -485,6 +639,20 @@
                   required 
                 />
                 <span v-if="errors.application_date" class="error-text">{{ errors.application_date }}</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Recruiter Assigned</label>
+                <select 
+                  v-model="candidateData.recruiter_assigned" 
+                  class="form-input"
+                  :disabled="isLoadingEmployees"
+                >
+                  <option value="">{{ isLoadingEmployees ? 'Loading recruiters...' : 'Select Recruiter' }}</option>
+                  <option v-for="employee in employees" :key="employee.id" :value="employee.id">
+                    {{ employee.first_name }} {{ employee.last_name }}
+                  </option>
+                </select>
               </div>
 
               <div class="form-group">
@@ -501,8 +669,9 @@
                 <label class="form-label">Interview Availability</label>
                 <input 
                   v-model="candidateData.interview_availability" 
-                  type="date" 
+                  type="text" 
                   class="form-input"
+                  placeholder="e.g., Weekdays 10AM - 2PM"
                 />
               </div>
 
@@ -520,16 +689,6 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Recruiter Assigned</label>
-                <input 
-                  v-model="candidateData.recruiter_assigned" 
-                  type="text" 
-                  class="form-input"
-                  placeholder="Recruiter ID/Name"
-                />
-              </div>
-
-              <div class="form-group">
                 <label class="form-label required">Status</label>
                 <select 
                   v-model="candidateData.status" 
@@ -538,13 +697,13 @@
                   required
                 >
                   <option value="">Select Status</option>
-                  <option value="Applied">Applied</option>
-                  <option value="Screening">Screening</option>
-                  <option value="Interview">Interview</option>
-                  <option value="Selected">Selected</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Offer Extended">Offer Extended</option>
-                  <option value="Hired">Hired</option>
+                  <option value="APPLIED">Applied</option>
+                  <option value="SCREENING">Screening</option>
+                  <option value="INTERVIEW">Interview</option>
+                  <option value="SELECTED">Selected</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="OFFER_EXTENDED">Offer Extended</option>
+                  <option value="HIRED">Hired</option>
                 </select>
                 <span v-if="errors.status" class="error-text">{{ errors.status }}</span>
               </div>
@@ -647,6 +806,10 @@ export default {
     const errors = ref({})
     const companies = ref([])
     const isLoadingCompanies = ref(false)
+    const jobRequisitions = ref([])
+    const isLoadingJobRequisitions = ref(false)
+    const employees = ref([])
+    const isLoadingEmployees = ref(false)
 
     // Form data for person information
     const formData = reactive({
@@ -704,6 +867,23 @@ export default {
       profile_image_url: ''
     })
 
+    const bankAccountData = reactive({
+      account_name: '',
+      account_number: '',
+      bank_name: '',
+      bank_branch: '',
+      routing_number: '',
+      swift_code: '',
+      iban: '',
+      currency: 'USD',
+      current_balance: 0.00,
+      available_balance: 0.00,
+      is_primary: true,
+      is_active: true,
+      is_default: false,
+      entity_type: 'PERSON'
+    })
+
     // Candidate specific data
     const candidateData = reactive({
       applied_position_id: null,
@@ -715,7 +895,7 @@ export default {
       offer_letter_signed: false,
       id_proof_submitted: false,
       educational_documents: false,
-      status: 'Applied',
+      status: 'APPLIED',
       resume: null
     })
 
@@ -771,6 +951,16 @@ export default {
               }
             })
           }
+
+          // Populate bank account data
+          if (newCandidate.person.bank_accounts && newCandidate.person.bank_accounts.length > 0) {
+            const bankAccount = newCandidate.person.bank_accounts[0]
+            Object.keys(bankAccountData).forEach(key => {
+              if (bankAccount[key] !== undefined) {
+                bankAccountData[key] = bankAccount[key]
+              }
+            })
+          }
         }
 
         // Populate candidate specific data
@@ -804,6 +994,56 @@ export default {
         })
       } finally {
         isLoadingCompanies.value = false
+      }
+    }
+
+    const loadJobRequisitions = async () => {
+      isLoadingJobRequisitions.value = true
+      try {
+        const jobRequisitionsResponse = await HRApiService.getJobRequisitions()
+        if (jobRequisitionsResponse.success) {
+          jobRequisitions.value = jobRequisitionsResponse.data.filter(job => job.is_active)
+        } else {
+          console.warn('Failed to load job requisitions:', jobRequisitionsResponse.error)
+          toast.warning('Failed to load job positions. Please check your connection and try again.', {
+            timeout: 3000,
+            icon: '⚠️'
+          })
+        }
+      } catch (error) {
+        console.error('Error loading job requisitions:', error)
+        toast.error('Error loading job positions. Please try again.', {
+          timeout: 3000,
+          icon: '❌'
+        })
+      } finally {
+        isLoadingJobRequisitions.value = false
+      }
+    }
+
+    const loadEmployees = async () => {
+      isLoadingEmployees.value = true
+      try {
+        const employeesResponse = await HRApiService.getEmployees()
+        if (employeesResponse.success) {
+          // Check if response has items array (paginated) or direct array
+          const employeeData = employeesResponse.data.items || employeesResponse.data
+          employees.value = employeeData.filter(employee => employee.is_active)
+        } else {
+          console.warn('Failed to load employees:', employeesResponse.error)
+          toast.warning('Failed to load recruiters list. Please check your connection and try again.', {
+            timeout: 3000,
+            icon: '⚠️'
+          })
+        }
+      } catch (error) {
+        console.error('Error loading employees:', error)
+        toast.error('Error loading recruiters. Please try again.', {
+          timeout: 3000,
+          icon: '❌'
+        })
+      } finally {
+        isLoadingEmployees.value = false
       }
     }
 
@@ -883,7 +1123,28 @@ export default {
         entity_type: 'candidate'
       }]
 
-      // Prepare passports array - include even if empty to match API structure
+      // Prepare bank accounts array
+      const bank_accounts = []
+      if (bankAccountData.account_name && bankAccountData.account_number && bankAccountData.bank_name) {
+        bank_accounts.push({
+          account_name: bankAccountData.account_name || '',
+          account_number: bankAccountData.account_number || '',
+          bank_name: bankAccountData.bank_name || '',
+          bank_branch: bankAccountData.bank_branch || '',
+          routing_number: bankAccountData.routing_number || '',
+          swift_code: bankAccountData.swift_code || '',
+          iban: bankAccountData.iban || '',
+          currency: bankAccountData.currency || 'USD',
+          current_balance: parseFloat(bankAccountData.current_balance) || 0.00,
+          available_balance: parseFloat(bankAccountData.available_balance) || 0.00,
+          is_primary: bankAccountData.is_primary !== undefined ? bankAccountData.is_primary : true,
+          is_active: bankAccountData.is_active !== undefined ? bankAccountData.is_active : true,
+          is_default: bankAccountData.is_default !== undefined ? bankAccountData.is_default : false,
+          entity_type: 'PERSON'
+        })
+      }
+
+      // Prepare passports array
       const passports = []
       if (passportData.passport_number && passportData.expiry_date && passportData.country_of_issue) {
         passports.push({
@@ -909,7 +1170,7 @@ export default {
         ...formData,
         contacts,
         addresses,
-        bank_accounts: [], // Empty for candidates
+        bank_accounts,
         passports,
         social_profiles
       }
@@ -920,13 +1181,29 @@ export default {
         ...candidateData
       }
 
-      // Clean up empty string values that should be null
+      // Clean up empty string values that should be null for specific fields
       Object.keys(data.person).forEach(key => {
         if (data.person[key] === '' && ['middle_name', 'preferred_name', 'title', 'suffix', 'blood_group'].includes(key)) {
           data.person[key] = data.person[key] || null
         }
       })
 
+      // Ensure proper data types for candidate fields
+      if (data.skills_matched !== undefined) {
+        data.skills_matched = parseFloat(data.skills_matched) || 0.0
+      }
+      
+      // Ensure applied_position_id is proper format if provided
+      if (data.applied_position_id === '') {
+        data.applied_position_id = null
+      }
+      
+      // Ensure recruiter_assigned is proper format if provided
+      if (data.recruiter_assigned === '') {
+        data.recruiter_assigned = ''
+      }
+
+      console.log('Prepared candidate submission data:', JSON.stringify(data, null, 2))
       return data
     }
 
@@ -1088,9 +1365,19 @@ export default {
         socialProfileData[key] = ''
       })
 
+      Object.keys(bankAccountData).forEach(key => {
+        if (typeof bankAccountData[key] === 'string') {
+          bankAccountData[key] = key === 'currency' ? 'USD' : key === 'entity_type' ? 'PERSON' : ''
+        } else if (typeof bankAccountData[key] === 'boolean') {
+          bankAccountData[key] = key === 'is_primary' || key === 'is_active' ? true : false
+        } else if (typeof bankAccountData[key] === 'number') {
+          bankAccountData[key] = 0.00
+        }
+      })
+
       Object.keys(candidateData).forEach(key => {
         if (typeof candidateData[key] === 'string') {
-          candidateData[key] = key === 'status' ? 'Applied' : ''
+          candidateData[key] = key === 'status' ? 'APPLIED' : ''
         } else if (typeof candidateData[key] === 'boolean') {
           candidateData[key] = false
         } else if (typeof candidateData[key] === 'number') {
@@ -1107,6 +1394,8 @@ export default {
     // Initialize
     onMounted(() => {
       loadCompanies()
+      loadJobRequisitions()
+      loadEmployees()
     })
 
     return {
@@ -1117,9 +1406,14 @@ export default {
       addressData,
       passportData,
       socialProfileData,
+      bankAccountData,
       candidateData,
       companies,
       isLoadingCompanies,
+      jobRequisitions,
+      isLoadingJobRequisitions,
+      employees,
+      isLoadingEmployees,
       isEdit,
       handleSubmit,
       closeModal

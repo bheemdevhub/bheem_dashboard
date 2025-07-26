@@ -227,14 +227,25 @@ export default {
     const fetchCompany = async () => {
       if (props.offer.company_id) {
         try {
+          console.log('Fetching company for ID:', props.offer.company_id)
           const result = await HRApiService.getCompanies()
           if (result.success) {
             const companies = result.data || []
+            console.log('Companies received:', companies)
             company.value = companies.find(c => c.id === props.offer.company_id)
+            console.log('Found company:', company.value)
+            
+            if (!company.value) {
+              console.warn('Company not found for ID:', props.offer.company_id)
+            }
+          } else {
+            console.error('Failed to fetch companies:', result.error)
           }
         } catch (error) {
           console.error('Error fetching company:', error)
         }
+      } else {
+        console.log('No company_id provided in offer:', props.offer)
       }
     }
 
@@ -302,10 +313,25 @@ export default {
     }
 
     const getCompanyName = () => {
+      // First priority: fetched company data
       if (company.value?.company_name) {
-        return `${company.value.company_name} (${company.value.company_code})`
+        return company.value.company_code 
+          ? `${company.value.company_name} (${company.value.company_code})`
+          : company.value.company_name
       }
-      return props.offer.company_id ? 'Loading...' : 'N/A'
+      
+      // Second priority: company data from offer object
+      if (props.offer.company_name) {
+        return props.offer.company_name
+      }
+      
+      // Third priority: show loading if we have company_id but no company data yet
+      if (props.offer.company_id && !company.value) {
+        return 'Loading...'
+      }
+      
+      // Default: N/A
+      return 'N/A'
     }
 
     const formatDate = (dateString) => {

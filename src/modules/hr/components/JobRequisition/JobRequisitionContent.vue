@@ -1,5 +1,13 @@
 <template>
   <div class="job-requisition-content">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading job requisition details...</p>
+    </div>
+
+    <!-- Content when loaded -->
+    <template v-else>
     <!-- Header Section -->
     <div class="content-header">
       <div class="job-info">
@@ -130,7 +138,7 @@
       </div>
 
       <!-- Skills -->
-      <div class="detail-section full-width" v-if="jobRequisition.skills && jobRequisition.skills.length">
+      <div class="detail-section full-width" v-if="jobRequisition.skills && Array.isArray(jobRequisition.skills) && jobRequisition.skills.length">
         <h3 class="section-title">
           <svg class="section-icon" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
@@ -139,20 +147,24 @@
         </h3>
         <div class="skills-container">
           <span 
-            v-for="skill in jobRequisition.skills" 
-            :key="skill.id || skill"
+            v-for="skillId in jobRequisition.skills" 
+            :key="skillId"
             class="skill-tag"
           >
-            {{ typeof skill === 'string' ? skill : (skill.name || skill.id) }}
+            {{ getSkillName(skillId) }}
           </span>
         </div>
       </div>
 
     </div>
+    </template>
   </div>
 </template>
 
 <script>
+import { ref, onMounted, watch } from 'vue'
+import { HRApiService } from '../../services/hrApiService'
+
 export default {
   name: 'JobRequisitionContent',
   props: {
@@ -163,6 +175,68 @@ export default {
   },
   emits: ['refresh', 'edit'],
   setup(props, { emit }) {
+    // Reactive data for lookup information
+    const employees = ref([])
+    const companies = ref([])
+    const departments = ref([])
+    const jobTypes = ref([])
+    const skills = ref([])
+    const loading = ref(false)
+
+    // Fetch all required data
+    const fetchAllData = async () => {
+      loading.value = true
+      try {
+        await Promise.all([
+          fetchEmployees(),
+          fetchCompanies(),
+          fetchLookups()
+        ])
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        loading.value = false
+      }
+    }
+
+    // Fetch employees for hiring manager
+    const fetchEmployees = async () => {
+      try {
+        const result = await HRApiService.getEmployees()
+        if (result.success && result.data.items) {
+          employees.value = result.data.items
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error)
+      }
+    }
+
+    // Fetch companies
+    const fetchCompanies = async () => {
+      try {
+        const result = await HRApiService.getCompanies()
+        if (result.success && result.data) {
+          companies.value = result.data
+        }
+      } catch (error) {
+        console.error('Error fetching companies:', error)
+      }
+    }
+
+    // Fetch lookups (departments, job types, skills)
+    const fetchLookups = async () => {
+      try {
+        const result = await HRApiService.getLookups()
+        if (result.success && result.data) {
+          // Filter lookups by type
+          departments.value = result.data.filter(lookup => lookup.type === 'department' && lookup.is_active)
+          jobTypes.value = result.data.filter(lookup => lookup.type === 'job_type' && lookup.is_active)
+          skills.value = result.data.filter(lookup => lookup.type === 'skill' && lookup.is_active)
+        }
+      } catch (error) {
+        console.error('Error fetching lookups:', error)
+      }
+    }
 
     const handleEdit = () => {
       emit('edit', props.jobRequisition)
@@ -179,21 +253,37 @@ export default {
     }
 
     const getDepartmentName = () => {
-      // This would normally come from a lookup table
-      return props.jobRequisition.department_name || 'N/A'
+      if (!props.jobRequisition.department_id) return 'N/A'
+      
+      const department = departments.value.find(dept => dept.id === props.jobRequisition.department_id)
+      return department ? department.name : props.jobRequisition.department_name || 'N/A'
     }
 
     const getJobTypeName = () => {
-      // This would normally come from a lookup table
-      return props.jobRequisition.job_type_name || 'N/A'
+      if (!props.jobRequisition.job_type_id) return 'N/A'
+      
+      const jobType = jobTypes.value.find(type => type.id === props.jobRequisition.job_type_id)
+      return jobType ? jobType.name : props.jobRequisition.job_type_name || 'N/A'
     }
 
     const getEmploymentTypeName = () => {
-      // This would normally come from a lookup table
-      return props.jobRequisition.employment_type_name || 'N/A'
+      // Return the employment type from the job requisition data
+      if (props.jobRequisition.employment_type) {
+        return props.jobRequisition.employment_type
+      }
+      
+      // Fallback to hiring manager's employment type if available
+      const hiringManager = employees.value.find(emp => emp.id === props.jobRequisition.hiring_manager_id)
+      return hiringManager ? hiringManager.employment_type : 'N/A'
     }
 
     const getHiringManagerName = () => {
+      if (!props.jobRequisition.hiring_manager_id) return 'N/A'
+      
+      const manager = employees.value.find(emp => emp.id === props.jobRequisition.hiring_manager_id)
+      if (manager) {
+        return `${manager.first_name} ${manager.last_name}`.trim()
+      }
       return props.jobRequisition.hiring_manager_name || 'N/A'
     }
 
@@ -212,7 +302,28 @@ export default {
     }
 
     const getCompanyName = () => {
-      return props.jobRequisition.company_name || 'N/A'
+      if (!props.jobRequisition.company_id) return 'N/A'
+      
+      const company = companies.value.find(comp => comp.id === props.jobRequisition.company_id)
+      return company ? company.company_name : props.jobRequisition.company_name || 'N/A'
+    }
+
+    const getSkillNames = () => {
+      if (!props.jobRequisition.skills || !Array.isArray(props.jobRequisition.skills)) {
+        return []
+      }
+      
+      return props.jobRequisition.skills.map(skillId => {
+        const skill = skills.value.find(s => s.id === skillId)
+        return skill ? skill.name : skillId
+      })
+    }
+
+    const getSkillName = (skillId) => {
+      if (!skillId) return 'Unknown Skill'
+      
+      const skill = skills.value.find(s => s.id === skillId)
+      return skill ? skill.name : skillId
     }
 
     const formatDate = (dateString) => {
@@ -222,9 +333,20 @@ export default {
       return date.toLocaleDateString('en-GB') // DD/MM/YYYY format
     }
 
+    // Watch for changes in job requisition prop
+    watch(() => props.jobRequisition, (newVal) => {
+      if (newVal) {
+        fetchAllData()
+      }
+    }, { immediate: true })
 
+    // Fetch data on component mount
+    onMounted(() => {
+      fetchAllData()
+    })
 
     return {
+      loading,
       getJobInitials,
       getDepartmentName,
       getJobTypeName,
@@ -232,6 +354,8 @@ export default {
       getHiringManagerName,
       getSalaryRange,
       getCompanyName,
+      getSkillNames,
+      getSkillName,
       formatDate,
       handleEdit
     }
@@ -246,6 +370,31 @@ export default {
   padding: 1.5rem;
   margin: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .content-header {
@@ -298,6 +447,36 @@ export default {
 .content-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.edit-btn svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .status-section {

@@ -156,8 +156,9 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { HRApiService } from '../../services/hrApiService'
-import { useToast } from 'vue-toastification'
 import OfferContent from './OfferContent.vue'
+import Swal from 'sweetalert2'
+import { useToast } from 'vue-toastification'
 
 export default {
   name: 'OfferList',
@@ -266,25 +267,43 @@ export default {
 
     const deleteOffer = async (offer) => {
       const candidateName = getCandidateName(offer)
-      if (!confirm(`Are you sure you want to delete the offer for ${candidateName}?`)) {
+      
+      const result = await Swal.fire({
+        title: 'Delete Offer',
+        text: `Are you sure you want to delete the offer for ${candidateName}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
+      })
+
+      if (!result.isConfirmed) {
         return
       }
 
       try {
-        const result = await HRApiService.deleteOffer(offer.id)
-        if (result.success) {
-          toast.success(`Offer for ${candidateName} deleted successfully!`, {
+        const deleteResult = await HRApiService.deleteOffer(offer.id)
+        if (deleteResult.success) {
+          // Show toast message after successful deletion
+          toast.success(`Offer for ${candidateName} has been deleted successfully!`, {
+            timeout: 4000,
             icon: '✅'
           })
+          
           await fetchOffers()
         } else {
-          toast.error(`Failed to delete offer: ${result.error}`, {
+          toast.error(`Failed to delete offer: ${deleteResult.error}`, {
+            timeout: 5000,
             icon: '❌'
           })
         }
       } catch (error) {
         console.error('Error deleting offer:', error)
-        toast.error('Failed to delete offer', {
+        toast.error('Failed to delete offer. Please try again.', {
+          timeout: 5000,
           icon: '❌'
         })
       }

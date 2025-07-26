@@ -369,15 +369,29 @@ export default {
     // API data fetching
     const fetchCompanies = async () => {
       try {
+        console.log('Fetching companies...')
         const result = await HRApiService.getCompanies();
+        console.log('Companies API result:', result)
+        
         if (result.success) {
           // Handle the direct array response from companies API
           const companiesData = result.data || [];
+          console.log('Companies data:', companiesData)
+          
           companies.value = companiesData.map(company => ({
             id: company.id,
-            company_name: company.company_name,
-            name: company.company_name // For template compatibility
+            name: company.company_name || company.name,
+            company_code: company.company_code
           }));
+          
+          console.log('Mapped companies:', companies.value)
+          
+          if (companiesData.length === 0) {
+            toast.info('No companies available. Please contact administrator to set up companies.', {
+              timeout: 4000,
+              icon: 'ℹ️'
+            });
+          }
         } else {
           console.error('Error fetching companies:', result.error);
           toast.warning('Failed to load companies list. Some form fields may be limited.', {

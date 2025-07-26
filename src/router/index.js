@@ -42,6 +42,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/accounting-dashboard',
+    name: 'Accounting',
+    component: () => import('@/modules/accounting/views/AccountingDashboardView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/login'
   }

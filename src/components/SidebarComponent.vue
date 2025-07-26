@@ -98,7 +98,7 @@
         </li>
 
         <li class="nav-item">
-          <a href="#" class="nav-link" @click="setActiveLink('accounting')">
+          <router-link to="/accounting-dashboard" class="nav-link" :class="{ active: $route.name === 'Accounting' }" @click="setActiveLink('accounting')">
             <div class="nav-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -106,7 +106,7 @@
               </svg>
             </div>
             <span v-if="!isCollapsed" class="nav-text">Accounting</span>
-          </a>
+          </router-link>
         </li>
 
         <li class="nav-item">
